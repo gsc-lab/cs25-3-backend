@@ -16,3 +16,9 @@ docker/mysql/init.sql~
 # 백업 파일
 *~
 *.bak
+
+# .env 환경 설정 파일
+.env
+
+# vendor 폴더
+/vendor/
