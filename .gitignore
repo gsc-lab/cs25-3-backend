@@ -22,3 +22,6 @@ docker/mysql/init.sql~
 
 # vendor 폴더
 /vendor/
+
+# composer.lock
+composer.lock
