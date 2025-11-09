@@ -47,9 +47,6 @@ class NewsController {
             error_log('[news_create]'. $e->getMessage());
             json_response(['error' => '서버 오류'], 500);
         }
-        
-        
-
     }
 }
 
