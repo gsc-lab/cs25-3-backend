@@ -11,12 +11,16 @@ class UsersController
 {
 
     // 'GET' -> 회원 정보 보기
-    public function show(string $account) :void {
+    public function show(string $account_id) :void {
+
+    
+
         // 유호성 확인
         if ($account === '') {
             json_response([
                 'success' => false,
-                'error' => ['code' => 'VALIDATION_ERROR', 'message' => '필수 필드가 비었습니다.']
+                'error' => ['code' => 'VALIDATION_ERROR', 
+                            'message' => '필수 필드가 비었습니다.']
             ], 400);
             return;
         }
@@ -33,7 +37,8 @@ class UsersController
             if($result->num_rows === 0){ 
                 json_response([
                     'success' => false,
-                    'error' => ['code' => 'USER_NOT_FOUND', 'message' => '해당 회원을 찾을 수 없습니다.']
+                    'error' => ['code' => 'USER_NOT_FOUND', 
+                                'message' => '해당 회원을 찾을 수 없습니다.']
                 ], 404);
                 return;
             }
@@ -154,6 +159,7 @@ class UsersController
                     return;
                 }
 
+                // 
                 if ($db->affected_rows === 0) {
                     json_response(['error' => '수정된 내용이 없습니다.'], 404);
                     return;
@@ -189,10 +195,12 @@ class UsersController
 
     // POST login
     public function login(): void {
+
         // JSON데이터를 받는다
         $data = read_json_body();
         $account = (string)($data['account'] ?? '');
         $password = (string)($data['password'] ?? '');
+        
         
         // DB접속
         $db = get_db();
