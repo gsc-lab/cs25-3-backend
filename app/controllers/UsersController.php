@@ -104,7 +104,7 @@ class UsersController
             $stmtInsert = $db->prepare("INSERT INTO Users
                                         (account, password, user_name, role, gender, phone, birth)
                                         VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtInsert->bind_param('sssssss', $account, $password_raw, $user_name, $role, $gender, $phone, $birth);
+            $stmtInsert->bind_param('sssssss', $account, $password_hash, $user_name, $role, $gender, $phone, $birth);
             $stmtInsert->execute();
 
             json_response([
