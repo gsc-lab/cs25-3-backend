@@ -8,7 +8,7 @@ session_start();
 require_once __DIR__ . '/../vendor/autoload.php';
 // public/index.php の vendor/autoload.php の直後あたりに一時追加
 require_once __DIR__ . '/../app/http.php';
-require_once __DIR__ . '/../routes/router.php';
+require_once __DIR__ . '/../routes/students.php';
 
 
 // 프리플라이트(OPTIONS)는 여기서 종료 → 라우터로 보내지 않음
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $router = new AltoRouter();
 $router->setBasePath('');
-registerAllRoutes($router);
+studentRegister($router);
 
 // 매칭
 $match = $router->match();
