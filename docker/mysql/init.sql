@@ -1,4 +1,10 @@
-CREATE DATABASE IF NOT EXISTS backend;
+-- 문자셋/콜레이션 먼저 고정
+SET NAMES utf8mb4;
+SET SESSION collation_connection = 'utf8mb4_0900_ai_ci';
+
+CREATE DATABASE IF NOT EXISTS backend
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE backend;
 
@@ -41,7 +47,15 @@ CREATE TABLE IF NOT EXISTS Users (
     PRIMARY KEY (user_id)
 );
 
+-- 💡 FK 충족을 위해 Users 샘플(특정 ID 3,5) 삽입
+INSERT INTO Users (user_id, account, password, user_name, role, gender, phone, birth)
+VALUES
+(3, 'designer03', SHA2('pass3',256), '디자이너3', 'designer', 'M', '010-3333-3333', '1995-03-03'),
+(5, 'designer05', SHA2('pass5',256), '디자이너5', 'designer', 'F', '010-5555-5555', '1993-05-05');
+
+
 CREATE TABLE IF NOT EXISTS Salon (
+    salon_id INT AUTO_INCREMENT,
     image JSON NOT NULL COMMENT 'URL 배열 (캐러셀)',
     introduction TEXT NOT NULL,
     information JSON NOT NULL COMMENT 'Address, OpeningHour, Holiday, Phone',
@@ -91,9 +105,9 @@ CREATE TABLE IF NOT EXISTS Designer (
 );
 
 INSERT INTO Designer 
-    (user_id, experience, good_at, personality, message, created_at)
-    VALUES (3, '3', '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
-    (5, '10', '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
+    (user_id, experience, good_at, personality, message)
+    VALUES (3, 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
+    (5, 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
 
 CREATE TABLE IF NOT EXISTS News (
     news_id INT AUTO_INCREMENT,
@@ -148,14 +162,6 @@ CREATE TABLE IF NOT EXISTS ReservationService (
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES Service(service_id)
         ON UPDATE CASCADE ON DELETE RESTRICT    
-);
-
-CREATE TABLE IF NOT EXISTS Service (
-    service_id INT AUTO_INCREMENT,
-    service_name VARCHAR(255) NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    duration_min INT NOT NULL DEFAULT 60, 
-    PRIMARY KEY (service_id)
 );
 
 INSERT INTO Service (service_name, price, duration_min) VALUES
