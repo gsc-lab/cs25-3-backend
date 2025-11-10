@@ -5,9 +5,11 @@ declare(strict_types=1);
 session_start();
 
 // 공용 헬퍼
+require_once __DIR__ . '/../vendor/autoload.php';
+// public/index.php の vendor/autoload.php の直後あたりに一時追加
 require_once __DIR__ . '/../app/http.php';
 require_once __DIR__ . '/../routes/router.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+
 
 // 프리플라이트(OPTIONS)는 여기서 종료 → 라우터로 보내지 않음
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -17,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $router = new AltoRouter();
 $router->setBasePath('');
-studentRegister($router);
+registerAllRoutes($router);
 
 // 매칭
 $match = $router->match();
@@ -25,7 +27,7 @@ $match = $router->match();
 // 라우터 
 if ($match) {
     $target = $match['target'];
-
+    
     if (is_callable($target)) {
         $result = call_user_func_array($target, $match['params']);
         if (is_string($result)) {
