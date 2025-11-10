@@ -38,11 +38,8 @@ if ($match) {
         [$controller, $method] = explode('#', $target, 2);
         $fqcn = "\\App\\Controllers\\{$controller}";
 
-        // 숫자 문자열은 int로 캐스팅
-        $params = array_map(
-            fn($v) => (is_string($v) && ctype_digit($v)) ? (int)$v : $v,
-            array_values($match['params'])
-        );
+        // 문자열 그대로 반환
+        $params = array_values($match['params']);
 
         (new $fqcn())->{$method}(...$params);
     } else {
