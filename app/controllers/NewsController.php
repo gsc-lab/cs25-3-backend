@@ -18,13 +18,14 @@ class NewsController {
         $content = (string)($date['content'] ?? '');
         $file = (string)($date['file'] ?? '');
 
+
         // 유호성 확인
         if ($title === '' || $content === '') {
             json_response([
                 'success' => false,
                 'error' => ['code' => 'VALIDATION_ERROR', 
                             'massege' => '필수 필드가 비었습니다.'
-            ]], 400);
+            ]], 422);
             return;
         }
 
@@ -39,8 +40,11 @@ class NewsController {
 
             // 프론트엔드에 반환하는 값
             json_response([
-                'title' => $title,
-                'content' => $content
+                'success' => true,
+                'date' =>[
+                    'title' => $title,
+                    'content' => $content
+                ]
             ],201);
 
         // 예외 처리
@@ -64,7 +68,11 @@ class NewsController {
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows === 0) {
-                json_response(['message' => '아직 글이 없습니다.']);
+                json_response([
+                "success" => false,
+                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
+                            'message' => '서버 오류가 발생했습니다.'
+                ]],500);
                 return;
             }
             
@@ -105,9 +113,10 @@ class NewsController {
         if ($id <= 0) {
             json_response([
                 "success" => false,
-                "error" => ['code' => 'INVALID_REQUEST',
-                             'message' => '유효하지 않은 요청입니다.'] 
-            ], 404);
+                "error" => [
+                    'code' => 'INVALID_REQUEST',
+                    'message' => '유효하지 않은 요청입니다.'] 
+            ], 400);
             return;
         }
         
@@ -130,8 +139,9 @@ class NewsController {
             if ($result->num_rows === 0) {
                 json_response([
                     "success" => false,
-                    "error" => ['code' => 'RESOURCE_NOT_FOUND',
-                                'message' => '요청한 리소스를 찾을 수 없습니다.']
+                    "error" => [
+                        'code' => 'RESOURCE_NOT_FOUND',
+                        'message' => '요청한 리소스를 찾을 수 없습니다.']
                 ], 404);
                 return;
             }
@@ -156,8 +166,9 @@ class NewsController {
             error_log('[news_show]'. $e->getMessage());
             json_response([
                 "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
+                "error" => [
+                    'code' => 'INTERNAL_SERVER_ERROR', 
+                    'message' => '서버 오류가 발생했습니다.'
             ]],500);
             return;
         }
@@ -179,9 +190,10 @@ class NewsController {
         if ($title === '' || $content === '') {
             json_response([
                     "success" => false,
-                    "error" => ["code" => "VALIDATION_ERROR",
-                                "message" => " 필수 필드가 비었습니다."]
-            ], 400);
+                    "error" => [
+                        "code" => "VALIDATION_ERROR",
+                        "message" => " 필수 필드가 비었습니다."]
+            ], 422);
             return;
         }
 
@@ -213,7 +225,7 @@ class NewsController {
             // update date데이터를 반환
             json_response([
                 "date" => $set
-            ],200);
+            ]);
 
         } catch (Throwable $e) {
             error_log('[news_update]'.$e->getMessage());
@@ -265,7 +277,7 @@ class NewsController {
 
             json_response([
                      "success" => true
-                ], 200);
+                ]);
 
             $stmt->close();
         } catch (Throwable $e) {
