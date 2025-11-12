@@ -5,6 +5,7 @@ require_once __DIR__.'/users.php';
 require_once __DIR__.'/news.php';
 require_once __DIR__.'/service.php';
 require_once __DIR__.'/designer.php';
+require_once __DIR__.'/hairstyle.php';
 
 function registerAllRoutes(AltoRouter $router): void {
     $router->map('GET', '/', fn() => 'Home Page');
@@ -12,4 +13,5 @@ function registerAllRoutes(AltoRouter $router): void {
     registerNews($router);
     registerService($router);
     registerDesigner($router);
+    registerHairstyle($router);
 }
