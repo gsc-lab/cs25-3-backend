@@ -54,17 +54,22 @@ VALUES
 (5, 'designer05', SHA2('pass5',256), '디자이너5', 'designer', 'F', '010-5555-5555', '1993-05-05');
 
 
+
+
 CREATE TABLE IF NOT EXISTS Salon (
-    salon_id INT AUTO_INCREMENT,
     image JSON NOT NULL COMMENT 'URL 배열 (캐러셀)',
     introduction TEXT NOT NULL,
     information JSON NOT NULL COMMENT 'Address, OpeningHour, Holiday, Phone',
     map VARCHAR(255) NOT NULL,
     traffic JSON NOT NULL COMMENT 'Bus, Parking, Directions',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (salon_id)
+    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 );
+
+INSERT INTO Salon (image, introduction, information, map, traffic)
+                     VALUES ('["image1.jpg", "image2"]', 'Make your dreams come true', '["We always keep up with the latest trends and propose styles that will bring out your individuality.","Our experienced stylists will carefully listen to your concerns and wishes. Let/''s work together to create your ideal hairstyle."]',
+                            'Degu', '["bus", "train", "car"]');
+
 
 CREATE TABLE IF NOT EXISTS Service (
     service_id INT AUTO_INCREMENT,
@@ -108,6 +113,8 @@ INSERT INTO Designer
     (user_id, experience, good_at, personality, message)
     VALUES (3, 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
     (5, 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
+
+
 
 CREATE TABLE IF NOT EXISTS News (
     news_id INT AUTO_INCREMENT,
@@ -179,3 +186,14 @@ CREATE TABLE IF NOT EXISTS TimeOff (
     PRIMARY KEY (to_id),
     CONSTRAINT fk_timeoff_designer FOREIGN KEY (designer_id) REFERENCES Users(user_id)
 );
+
+-- event scheduler ON--
+SET GLOBAL event_scheduler = ON;
+
+-- 과거의 스케즐 삭제 --
+CREATE EVENT IF NOT EXISTS delete_old_timeoff
+ON SCHEDULE EVERY 1 DAY
+DO
+  DELETE FROM TimeOff
+  WHERE end_at < CURDATE();
+
