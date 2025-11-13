@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $router = new AltoRouter();
-$router->setBasePath('');
+$router->setBasePath('/v1');
 registerAllRoutes($router);
 
 // 매칭
