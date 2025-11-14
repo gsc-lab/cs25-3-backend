@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controllers;
-
+use Throwable;
 // DB 로딩
 require_once __DIR__."/../db.php";
 // http.php 불러오기
@@ -11,10 +11,8 @@ class UsersController
 {
 
     // 'GET' -> 회원 정보 보기
-    public function show(string $account_id) :void {
-
-    
-
+    public function show(string $account) :void {
+        
         // 유호성 확인
         if ($account === '') {
             json_response([
@@ -82,7 +80,8 @@ class UsersController
                 // 유호하지 않으면 json_responce 반환
                 echo json_response([
                     'success' => false,
-                    'error' => ['code' => 'VALIDATION_ERROR"', 'message' => '필수 필드가 비었습니다.']
+                    'error' => ['code' => 'VALIDATION_ERROR"',
+                                'message' => '필수 필드가 비었습니다.']
                 ], 400);
                 return;
             }
@@ -93,24 +92,26 @@ class UsersController
             $stmtSelect->bind_param('s', $account);
             $stmtSelect->execute();
             $result = $stmtSelect->get_result();
-
+            
             // 중복된 account 여부를 확인
             if ($result->num_rows > 0){
                 echo json_response([
                     'success' => false,
-                    'error' => ['code' => '"ACCOUNT_DUPLICATED', 'message' => '중복된 ID입니다.']
+                    'error' => ['code' => 'ACCOUNT_DUPLICATED',
+                                'message' => '중복된 ID입니다.']
                 ], 409);
                 return;
             }
             
             // 없으면 password hash처리해 저장
-            $password_hashed = password_hash($password_raw, PASSWORD_DEFAULT);
+            $password_hash = password_hash($password_raw, PASSWORD_DEFAULT);
             
             $stmtInsert = $db->prepare("INSERT INTO Users
                                         (account, password, user_name, role, gender, phone, birth)
                                         VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmtInsert->bind_param('sssssss', $account, $password_hash, $user_name, $role, $gender, $phone, $birth);
             $stmtInsert->execute();
+            
 
             json_response([
             'account'        => $account,
@@ -124,7 +125,8 @@ class UsersController
             error_log('[users_create]' .$e->getMessage());
             json_response([
                 'success' => false,
-                'error' => ['code' => 'INTERNAL_SERVER_ERROR', 'message' => '서버 내부 오류가 발생했습니다.']
+                'error' => ['code' => 'INTERNAL_SERVER_ERROR',
+                            'message' => '서버 내부 오류가 발생했습니다.']
             ], 500);
         }
     } 
@@ -198,22 +200,24 @@ class UsersController
 
         // JSON데이터를 받는다
         $data = read_json_body();
-        $account = (string)($data['account'] ?? '');
-        $password = (string)($data['password'] ?? '');
+        $account = (string)$data['account'] ?? '';
+        $password = (string)$data['password'] ?? '';
+        $role = (string)$data['role'] ?? '';
         
         
         // DB접속
         $db = get_db();
         // account를 불어오기
-        $stmt = $db->prepare("SELECT user_name, user_id, role, password, account FROM Users WHERE account=?");
-        $stmt->bind_param('s',$account);
+        $stmt = $db->prepare("SELECT user_name, user_id, role, password, account FROM Users WHERE account=? AND role=?");
+        $stmt->bind_param('ss',$account, $role);
         $stmt->execute();
         $result = $stmt->get_result();
         // account 일치하면 password 비겨
         if($result->num_rows === 0){
             echo json_response([
                 'success' => false,
-                'error' => ['code' => 'AUTHENTICATION_FAILED', 'massage' => 'ID가 일치하지 않습니다.']
+                'error' => ['code' => 'AUTHENTICATION_FAILED',
+                            'massage' => 'ID가 일치하지 않습니다.']
             ], 401);
             return;
         }
@@ -221,10 +225,11 @@ class UsersController
         $row = $result->fetch_assoc();
 
         // 비밀번호 비겨
-        if (password_verify($password , $row['password'])) {
+        if (!password_verify($password , $row['password'])) {
             echo json_response([
                 'success' => false,
-                'error' => ['code' => 'VALIDATION_ERROR', 'message' => '비밀번호가 일치하지 않습니다.']
+                'error' => ['code' => 'VALIDATION_ERROR',
+                            'message' => '비밀번호가 일치하지 않습니다.']
             ], 401);
             return;
         }
