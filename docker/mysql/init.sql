@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 
 -- 💡 FK 충족을 위해 Users 샘플(특정 ID 3,5) 삽입
-INSERT INTO Users (user_id, account, password, user_name, role, gender, phone, birth)
+INSERT INTO Users (account, password, user_name, role, gender, phone, birth)
 VALUES
-(3, 'designer03', SHA2('pass3',256), '디자이너3', 'designer', 'M', '010-3333-3333', '1995-03-03'),
-(5, 'designer05', SHA2('pass5',256), '디자이너5', 'designer', 'F', '010-5555-5555', '1993-05-05');
+('designer1', 1111, '디자이너1', 'designer', 'M', '010-3333-3333', '1995-03-03'),
+('designer2', 2222, '디자이너2', 'designer', 'F', '010-5555-5555', '1993-05-05');
 
 
 
@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS HairStyle (
 CREATE TABLE IF NOT EXISTS Designer (
     designer_id INT AUTO_INCREMENT,
     user_id INT NOT NULL,
+    image VARCHAR(255) NOT NULL,
     experience INT NOT NULL,
     good_at VARCHAR(255) NOT NULL,
     personality VARCHAR(255) NOT NULL,
@@ -110,9 +111,9 @@ CREATE TABLE IF NOT EXISTS Designer (
 );
 
 INSERT INTO Designer 
-    (user_id, experience, good_at, personality, message)
-    VALUES (3, 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
-    (5, 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
+    (user_id, image, experience, good_at, personality, message)
+    VALUES (1, "designer1", 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
+    (2, "designer2", 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
 
 
 
@@ -180,11 +181,11 @@ INSERT INTO Service (service_name, price, duration_min) VALUES
 
 CREATE TABLE IF NOT EXISTS TimeOff (
     to_id INT AUTO_INCREMENT,
-    designer_id INT NOT NULL,
+    user_id INT NOT NULL,
     start_at DATE NOT NULL,
     end_at DATE NOT NULL,
     PRIMARY KEY (to_id),
-    CONSTRAINT fk_timeoff_designer FOREIGN KEY (designer_id) REFERENCES Users(user_id)
+    CONSTRAINT fk_timeoff_designer FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
 -- event scheduler ON--
