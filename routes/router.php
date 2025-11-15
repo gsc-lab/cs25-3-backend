@@ -8,6 +8,8 @@ require_once __DIR__.'/designer.php';
 require_once __DIR__.'/hairstyle.php';
 require_once __DIR__.'/salon.php';
 require_once __DIR__.'/timeoff.php';
+require_once __DIR__.'/reservation.php';
+
 
 function registerAllRoutes(AltoRouter $router): void {
     $router->map('GET', '/', fn() => 'Home Page');
@@ -18,4 +20,5 @@ function registerAllRoutes(AltoRouter $router): void {
     registerHairstyle($router);
     registerTimeoff($router);
     registerSalon($router);
+    registerReservation($router);
 }
