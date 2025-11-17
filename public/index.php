@@ -6,7 +6,10 @@ session_start();
 
 // 공용 헬퍼
 require_once __DIR__ . '/../vendor/autoload.php';
-// public/index.php の vendor/autoload.php の直後あたりに一時追加
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
 require_once __DIR__ . '/../app/http.php';
 require_once __DIR__ . '/../routes/router.php';
 
