@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS Salon (
 
 INSERT INTO Salon (image, introduction, information, map, traffic)
                      VALUES ('["image1.jpg", "image2"]', 'Make your dreams come true', '["We always keep up with the latest trends and propose styles that will bring out your individuality.","Our experienced stylists will carefully listen to your concerns and wishes. Let/''s work together to create your ideal hairstyle."]',
-                            'Degu', '["bus", "train", "car"]');
+                            'Daegu', '["bus", "train", "car"]');
 
 
 CREATE TABLE IF NOT EXISTS Service (
@@ -80,15 +80,43 @@ CREATE TABLE IF NOT EXISTS Service (
 );
 
 INSERT INTO Service (service_name, price, duration_min) VALUES
-    ('CUT', 10000, 60),
-    ('PERM', 60000, 80),
-    ('COROL', 50000, 60)
+    -- 기본 커트
+    ('MEN CUT', 12000, 50),
+    ('WOMEN CUT', 15000, 60),
+    ('DRY CUT', 15000, 60),
+    ('KIDS CUT', 8000, 40),
+
+    -- 펌 (PERM)
+    ('BASIC PERM', 50000, 90),
+    ('DIGITAL PERM', 80000, 120),
+    ('SETTING PERM', 90000, 120),
+    ('VOLUME PERM', 70000, 100),
+    ('DOWN PERM', 30000, 40),
+
+    -- 염색 (COLOR)
+    ('COLOR BASIC', 50000, 90),
+    ('COLOR FULL', 70000, 100),
+    ('BLEACHING', 90000, 120),
+    ('RETOUCH COLOR', 40000, 70),
+    ('GRAY COVER COLOR', 50000, 80),
+
+    -- 클리닉 (CARE / CLINIC)
+    ('KERATIN TREATMENT', 60000, 60),
+    ('PROTEIN CARE', 40000, 50),
+    ('MOISTURE CARE', 35000, 45),
+    ('SCALP CARE', 30000, 40),
+
+    -- 스타일링
+    ('BLOW DRY', 15000, 30),
+    ('IRON STYLING', 20000, 40),
+    ('UP STYLE', 30000, 60)
 ;
 
 CREATE TABLE IF NOT EXISTS HairStyle (
     hair_id INT AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     image VARCHAR(255) NOT NULL,
+    image_key VARCHAR(255) NOT NULL,
     description TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
