@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS Users (
 -- 💡 FK 충족을 위해 Users 샘플(특정 ID 3,5) 삽입
 INSERT INTO Users (account, password, user_name, role, gender, phone, birth)
 VALUES
-('designer1', 1111, '디자이너1', 'designer', 'M', '010-3333-3333', '1995-03-03'),
-('designer2', 2222, '디자이너2', 'designer', 'F', '010-5555-5555', '1993-05-05');
+('designer1',SHA2('1111',256), '디자이너1', 'designer', 'M', '010-3333-3333', '1995-03-03'),
+('designer2',SHA2('2222',256), '디자이너2', 'designer', 'F', '010-5555-5555', '1993-05-05');
 
 
 
@@ -141,8 +141,7 @@ CREATE TABLE IF NOT EXISTS Reservation (
     client_id INT NOT NULL,
     designer_id INT NOT NULL,
     requirement TEXT,
-    service VARCHAR(100) NOT NULL,
-    date DATE NOT NULL,
+    day DATE NOT NULL,
     start_at TIME NOT NULL,
     end_at TIME ,
     status ENUM('pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show') NOT NULL DEFAULT 'pending',
