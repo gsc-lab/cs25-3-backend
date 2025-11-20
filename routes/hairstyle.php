@@ -3,12 +3,63 @@
 declare(strict_types=1);
 
 function registerHairstyle(AltoRouter $router) :void {
-    $router->map("GET", '/hairstyle', "HairstyleController#index"); // hairstyle 전체 보기
-    $router->map("GET", '/hairstyle/[a:hairstyle_id]', "HairstyleController#show");  // hairstyle 세부 보기
-    $router->map("POST", '/hairstyle/create', "HairstyleController#create"); // hairstyle 작성
-    $router->map("POST", '/hairstyle/image/[a:hairstyle_id]', "HairstyleController#updateImage");  // hairstyle 이미지 수정
-    $router->map("PUT", '/hairstyle/update/[a:hairstyle_id]', "HairstyleController#update"); // 특정 hairstyle 수정
-    $router->map("DELETE", '/hairstyle/delete/[a:hairstyle_id]', "HairstyleController#delete"); // 특정 hairstyle 삭게하기    
+    
+    // =========================
+    // hairstyle 전체 보기(누구나)
+    // =========================
+    $router->map("GET", '/hairstyle',[
+                    'controller'  => 'HairstyleController',
+                    'action'     => 'index',
+                    'middleware' => []
+                ]); 
+
+    
+    // =========================
+    // hairstyle 세부 보기(누구나)
+    // =========================
+    $router->map("GET", '/hairstyle/[a:hairstyle_id]',[
+                'controller' => 'HairstyleController',
+                'action'     => 'show',
+                'middleware' => []
+            ]);
+            
+    // =================================
+    // hairstyle 작성 (login필수)(manager)
+    // =================================        
+    $router->map("POST", '/hairstyle/create', [
+                'controller'  => 'HairstyleController',
+                'action'     => 'create',
+                'middleware' => []
+            ]); 
+            
+            
+    // ========================================
+    // hairstyle 이미지 수정 (login필수)(manager)
+    // ========================================          
+    $router->map("POST", '/hairstyle/image/[a:hairstyle_id]',[
+                'controller' => 'HairstyleController',
+                'action'     => 'updateImage',
+                'middleware' => ['login', 'manager']
+            ]);  
+
+    // ================================================
+    // 특정 hairstyle title, description 수정 (login필수)(manager)
+    // ================================================
+    $router->map("PUT", '/hairstyle/update/[a:hairstyle_id]',[
+                'controller' => 'HairstyleController',
+                'action'     => 'update',
+                'middleware' => ['login', 'manager']
+            ]); 
+
+
+    // ==========================================
+    // 특정 hairstyle 내용 삭제 (login필수)(manager)
+    // ==========================================         
+    $router->map("DELETE", '/hairstyle/delete/[a:hairstyle_id]', [
+                'controller' => 'HairstyleController',
+                'action'     => 'delete',
+                'middleware' => ['login', 'manager']
+            ]);    
 }
 
 ?>
