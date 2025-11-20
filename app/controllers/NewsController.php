@@ -242,7 +242,7 @@ class NewsController {
 
 
     // 'DELETE' -> 글을 삭제
-    public function delete(int $news_id):void{
+    public function delete(string $news_id):void{
         
         // news_id 받기
         $id = isset($news_id) ? (int)$news_id : 0;

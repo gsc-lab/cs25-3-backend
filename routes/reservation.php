@@ -3,9 +3,35 @@ declare(strict_types=1);
 
 // 회원 가입 
 function registerReservation(AltoRouter $router): void {
-    $router->map('GET', "/reservation", 'ReservationController#show'); // (클라이언트) 자기 예약 정보 보기
-    $router->map('POST', "/reservation/create", 'ReservationController#create'); // 예약하기
-    $router->map('PUT', "/reservation/update/[a:reservation_id]", 'ReservationController#update'); // (클라이언트) 예약 cancel
+    
+    // ===============================================
+    // 자기 예약 정보 보기(login필수)(designer, client)
+    // =============================================== 
+    $router->map('GET', "/reservation", [
+                'controller' => 'ReservationController',
+                'action'     => 'show',
+                'middleware' => ['login', 'designer_or_client']    
+            ]); 
+
+
+    // ===========================
+    // 예약하기(login필수)( client)
+    // ===========================        
+    $router->map('POST', "/reservation/create",[
+                'controller' => 'ReservationController',
+                'action'     => 'create',
+                'middleware' => ['login', 'client'] 
+            ]); 
+
+
+    // =====================================================
+    // 예약 cancel , status 수정(login필수)(designer, client)
+    // =====================================================         
+    $router->map('PUT', "/reservation/update/[a:reservation_id]",[
+                'controller' => 'ReservationController',
+                'action'     => 'update',
+                'middleware' => ['login', 'designer_or_client'] 
+            ]); 
 }
 
 ?>

@@ -134,7 +134,6 @@ use Throwable;
             $date = read_json_body();
 
             // 필드별 유효성 검사
-            $user_id = filter_var($date['user_id'], FILTER_VALIDATE_INT);
             $image = (string)$date['image'] ?? '';
             $experience = filter_var($date['experience'], FILTER_VALIDATE_INT);
             $good_at = (string)$date['good_at'] ?? '';
@@ -142,8 +141,7 @@ use Throwable;
             $message = (string)$date['message'] ?? '';
 
             // 필수 값 검증
-            if ($experience === false || $experience <= 0 || 
-                $user_id === false || $user_id <= 0 || $image === ''|| 
+            if ($experience === false || $experience <= 0 || $image === ''|| 
                 $good_at === '' || $personality === '' || $message === '') {
                     json_response([
                     'success' => false,
@@ -162,7 +160,7 @@ use Throwable;
                                         (user_id, image, experience, good_at, personality, message)
                                         VALUES (?,?,?,?,?,?)");
                 $stmt->bind_param('isisss',
-                    $user_id,$image,  $experience, 
+                    $_SESSION['user']['user_id'],$image,  $experience, 
                         $good_at, $personality, $message
                     );
 

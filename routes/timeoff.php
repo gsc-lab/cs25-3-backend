@@ -3,10 +3,46 @@ declare(strict_types=1);
 
 // 회원 가입 
 function registerTimeoff(AltoRouter $router): void {
-    $router->map('GET', "/timeoff", 'TimeoffController#index'); // designer 휴무 정보 보기
-    $router->map('POST', "/timeoff/create", 'TimeoffController#create'); // designer 휴무 작성
-    $router->map('PUT', "/timeoff/update/[a:designer_id]", 'TimeoffController#update'); // designer 휴무 수정 
-    $router->map('DELETE', "/timeoff/delete/[a:to_id]", 'TimeoffController#delete'); // designer 휴무 삭제
+
+
+    // =======================================
+    // designer 휴무 정보 보기 (login) (manager)
+    // =======================================  
+    $router->map('GET', "/timeoff",[
+                'controller' => 'TimeoffController',
+                'action'     => 'index',
+                'middleware' => ['login', 'manager']
+            ]); 
+
+
+    // =======================================
+    // designer 휴무 작성 (login) (manager)
+    // =======================================        
+    $router->map('POST', "/timeoff/create",[
+                'controller' => 'TimeoffController',
+                'action'     => 'create',
+                'middleware' => ['login', 'manager']
+            ]); 
+
+
+    // =======================================
+     // designer 휴무 수정 (login) (manager)
+    // ======================================= 
+    $router->map('PUT', "/timeoff/update/[a:designer_id]",[
+                'controller' => 'TimeoffController',
+                'action'     => 'update',
+                'middleware' => ['login', 'manager']
+            ]);
+            
+            
+    // ===================================
+    // designer 휴무 삭제 (login) (manager)
+    //====================================
+    $router->map('DELETE', "/timeoff/delete/[a:to_id]",[
+                'controller' => 'TimeoffController',
+                'action'     => 'delete',
+                'middleware' => ['login', 'manager']
+    ]);
 }
 
 ?>
