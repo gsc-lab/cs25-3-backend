@@ -3,11 +3,53 @@
 declare(strict_types=1);
 
 function registerNews(AltoRouter $router) :void {
-    $router->map("GET", '/news', "NewsController#index"); // news 전체 보기
-    $router->map("GET", '/news/[a:news_id]', "NewsController#show"); // news 상세 보기
-    $router->map("POST", '/news/create', "NewsController#create"); // news작성
-    $router->map("PUT", '/news/update/[a:news_id]', "NewsController#update"); // news수정 
-    $router->map("DELETE", '/news/delete/[a:news_id]', "NewsController#delete"); // news 삭게하기    
+
+    // ======================
+    // news 전체 보기 (누구나)
+    // ======================  
+    $router->map("GET", '/news',[
+                'controller' => 'NewsController',
+                'action'     => 'index',
+                'middleware' => []
+            ]);
+            
+    // ======================
+    // news 상세 보기 (누구나)
+    // ======================          
+    $router->map("GET", '/news/[a:news_id]',[
+                'controller' => 'NewsController',
+                'action'     => 'show',
+                'middleware' => []
+            ]); 
+
+    // ===========================
+    // news작성 (login필수)(manager)
+    // ===========================              
+    $router->map("POST", '/news/create', [
+                'controller' => 'NewsController',
+                'action'     => 'create',
+                'middleware' => ['login', 'manager']
+            ]); 
+
+
+    // ===========================
+    // news수정  (login필수)(manager)
+    // ===========================         
+    $router->map("PUT", '/news/update/[a:news_id]', [
+                'controller' => 'NewsController',
+                'action'     => 'update',
+                'middleware' => ['login', 'manager']
+            ]); 
+
+
+    // ================================
+    // news 삭게하기 (login필수)(manager)
+    // ================================ 
+    $router->map("DELETE", '/news/delete/[a:news_id]',[
+                'controller' => 'NewsController',
+                'action'     => 'delete',
+                'middleware' => ['login', 'manager']
+            ]);   
 }
 
 ?>
