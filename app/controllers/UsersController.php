@@ -10,25 +10,21 @@ require_once __DIR__."/../http.php";
 class UsersController
 {
 
+
+    // ======================
     // 'GET' -> 회원 정보 보기
-    public function show(string $account) :void {
+    // ======================
+    public function show() :void {
         
-        // 유호성 확인
-        if ($account === '') {
-            json_response([
-                'success' => false,
-                'error' => ['code' => 'VALIDATION_ERROR', 
-                            'message' => '필수 필드가 비었습니다.']
-            ], 400);
-            return;
-        }
+        $user_id = $_SESSION['user']['user_id'];
 
         try {
             // DB접속
             $db = get_db();
             // SQL문 (SELECT)
-            $stmt = $db->prepare("SELECT * FROM Users WHERE account=?");
-            $stmt->bind_param('s',$account);
+            $stmt = $db->prepare("SELECT user_name, gender, phone, birth, created_at
+                                         FROM Users WHERE user_id=?");
+            $stmt->bind_param('i',$user_id);
             $stmt->execute();
             $result = $stmt->get_result();
             
@@ -45,34 +41,36 @@ class UsersController
             json_response([
                 'success' => true,
                 'data' => ['user' => $row]
-            ],200);
+            ]);
         
             // 오류시 
         } catch (Throwable $e) {
             error_log('[users_show]'. $e->getMessage());
             json_response([
                 'success' => false,
-                'error' => ['code' => 'INTERNAL_SERVER_ERROR"', 'message' => '서버 오류']
+                'error' => ['code' => 'INTERNAL_SERVER_ERROR',
+                            'message' => '서버 오류가 발생했습니다.']
                 ], 500);
                 return;
             }     
     }
 
-
-    // 'POST' -> 회원 가입  {account}
+    // ====================
+    // 'POST' -> 회원 가입
+    // ====================  
     public function create() :void {
         try{
             // 값을 받기
-            $date = read_json_body();
+            $data = read_json_body();
 
             // 입력 값 꺼내기
-            $account      = trim((string)($date['account'] ?? ''));
-            $password_raw = trim((string)($date['password'] ?? ''));
-            $user_name    = trim((string)($date['user_name'] ?? ''));
-            $role         = trim((string)($date['role'] ?? ''));
-            $gender       = trim((string)($date['gender'] ?? ''));
-            $phone        = trim((string)($date['phone'] ?? ''));
-            $birth        = trim((string)($date['birth'] ?? ''));
+            $account      = isset($data['account']) ? trim((string)($data['account'])) : '';
+            $password_raw = isset($data['password']) ? trim((string)($data['password'])) : '' ;
+            $user_name    = isset($data['user_name']) ? trim((string)($data['user_name'])) : '';
+            $role         = isset($data['role']) ? trim((string)($data['role'])) : '';
+            $gender       = isset($data['gender']) ? trim((string)($data['gender'])) : '';
+            $phone        = isset($data['phone']) ? trim((string)($data['phone'])) : '';
+            $birth        = isset($data['birth']) ? trim((string)($data['birth'])) : '';
 
             // 유호성 확인
             if ($account === '' || $password_raw === '' || $user_name === '' ||
@@ -80,7 +78,7 @@ class UsersController
                 // 유호하지 않으면 json_responce 반환
                 echo json_response([
                     'success' => false,
-                    'error' => ['code' => 'VALIDATION_ERROR"',
+                    'error' => ['code' => 'VALIDATION_ERROR',
                                 'message' => '필수 필드가 비었습니다.']
                 ], 400);
                 return;
@@ -114,11 +112,8 @@ class UsersController
             
 
             json_response([
-            'account'        => $account,
-            'user_name'      => $user_name,
-            'birth'          => $birth,
-            'phone'          => $phone
-        ], 201);
+                'success' => true
+            ], 201);
             
 
         } catch (Throwable $e) {
@@ -131,93 +126,133 @@ class UsersController
         }
     } 
 
-    // 회원 정부 수정
-    public function update(string $account) :void {
-        // DB접속
-        $db   = get_db();
+
+    // ======================
+    // 'PUT' => 회원 정부 수정
+    // ======================
+    public function update() :void {
+
+        $user_id = $_SESSION['user']['user_id'];
+
         // Reqest버디(JSON)를 배열으로 받는다
-        $date = read_json_body();
+        $data = read_json_body();
+
+        $account      = isset($data['account']) ? trim((string)($data['account'])) : '';
+        $password_raw = isset($data['password']) ? trim((string)($data['password'])) : '' ;
+        $user_name    = isset($data['user_name']) ? trim((string)($data['user_name'])) : '';
+        $phone        = isset($data['phone']) ? trim((string)($data['phone'])) : '';
+        
+        // 유호성 확인
+        if ($account === '' || $password_raw === '' || $user_name === '') {
+            // 유호하지 않으면 json_responce 반환
+            echo json_response([
+                'success' => false,
+                'error' => ['code' => 'VALIDATION_ERROR',
+                            'message' => '필수 필드가 비었습니다.']
+            ], 400);
+            return;
+        }
+
+        $password_hash = password_hash($password_raw, PASSWORD_DEFAULT);
+
         // UPDATE하기 위한 배열
         $sets = [];
-
-        foreach ($date as $key => $value) {
-            // 값을 문자열으로 바꿔서 앞뒤 공백을 제거
-            $val = trim((string)$value);
-            // password 변경 때는 hash처리
-            if ($key === 'password') {
-                $val = password_hash($val, PASSWORD_DEFAULT);
-            }
-            // 예: user_name='Alice' 같은 형태의 문자열을 만들어서 배열에 추가
-            $sets[] = $key."='".(string)$val."'";
+        try {
+            // DB접속
+            $db   = get_db();
             
-            // SQL문
-            $sql = "UPDATE Users SET ". implode(',' , $sets) . " WHERE account='" . $account ."'";
-            
-            try {
-                // query
-                if (!$db->query($sql)) {
-                    error_log('[users_update] SQL error: '. $db->error);
-                    json_response(['error' => '수정 중 오류가 발생했습니다.'], 409);
-                    return;
-                }
-
-                // 
-                if ($db->affected_rows === 0) {
-                    json_response(['error' => '수정된 내용이 없습니다.'], 404);
-                    return;
-                }
-
-                json_response(['ok' => true]);
-
-            } catch (Throwable $e) {
-                error_log('[users_update' . $e->getMessage());
-                json_response(['error' => '서버 오류'], 500);
+            foreach ($data as $key => $value) {
+                $value = "?";
+                $v = $key ."=". $value;
+                array_push($sets, $v);
             }
+
+            $stmt = $db->prepare("UPDATE Users SET "
+                                . implode(",", $sets).
+                                " WHERE user_id = ?");
+            $stmt->bind_param('ssssi', $account, $password_hash, $user_name, $phone, $user_id);
+            $stmt->execute();
+
+            if ($stmt->affected_rows === 0){
+                json_response([
+                    "success" => false,
+                    "error" => ['code' => 'NO_CHANGES_APPLIED',
+                                'message' => '수정된 내용이 없습니다.']
+                ], 409);
+                return;
+            }
+
+            json_response(['ok' => true]);
+
+        
+        } catch (Throwable $e) {
+            error_log('[users_update' . $e->getMessage());
+            json_response([
+                'success' => false,
+                'error' => ['code' => 'INTERNAL_SERVER_ERROR',
+                            'message' => '서버 내부 오류가 발생했습니다.'
+            ]], 500);
         }
     }
 
-    // DELETE 탈퇴
-    public function delete(string $account) :void {
+
+    // =================
+    // 'DELETE' =>  탈퇴
+    // =================
+    public function delete() :void {
+
+        $user_id = $_SESSION['user']['user_id'];
 
         try{
             // db 접속
             $db = get_db();
-            $account = trim((string)$account ?? '');
-            $stmt = $db->prepare("DELETE FROM Users WHERE account=?");
-            $stmt->bind_param('s',$account);
+            $stmt = $db->prepare("DELETE FROM Users WHERE user_id=?");
+            $stmt->bind_param('i',$user_id);
             $stmt->execute();
 
             http_response_code(204);
             return;
         } catch (Throwable $e) {
             error_log('[users_delete]' . $e->getMessage());
-            json_response(['error' => '서버 오류'], 500);
+            json_response([
+                'success' => false,
+                'error' => ['code' => 'INTERNAL_SERVER_ERROR',
+                            'message' => '서버 내부 오류가 발생했습니다.'
+            ]], 500);
         }      
     } 
 
-    // POST login
+
+    // ================
+    // 'POST' => login
+    // ================
     public function login(): void {
 
         // JSON데이터를 받는다
         $data = read_json_body();
-        $account = (string)$data['account'] ?? '';
-        $password = (string)$data['password'] ?? '';
-        $role = (string)$data['role'] ?? '';
+
+        $account      = isset($data['account']) ? trim((string)($data['account'])) : '';
+        $password     = isset($data['password']) ? trim((string)($data['password'])) : '' ;
+        $role         = isset($data['role']) ? trim((string)($data['role'])) : '';
         
         
         // DB접속
         $db = get_db();
         // account를 불어오기
-        $stmt = $db->prepare("SELECT user_name, user_id, role, password, account FROM Users WHERE account=? AND role=?");
+        $stmt = $db->prepare("SELECT 
+                                    user_name, user_id, role, password, account 
+                                    FROM Users 
+                                    WHERE account=? AND role=?");
         $stmt->bind_param('ss',$account, $role);
         $stmt->execute();
         $result = $stmt->get_result();
-        // account 일치하면 password 비겨
+        
+        // account 일하는지 비겨
         if($result->num_rows === 0){
             echo json_response([
                 'success' => false,
                 'error' => ['code' => 'AUTHENTICATION_FAILED',
-                            'massage' => 'ID가 일치하지 않습니다.']
+                            'message' => 'ID가 일치하지 않습니다.']
             ], 401);
             return;
         }
@@ -228,7 +263,7 @@ class UsersController
         if (!password_verify($password , $row['password'])) {
             echo json_response([
                 'success' => false,
-                'error' => ['code' => 'VALIDATION_ERROR',
+                'error' => ['code' => 'WRONG_PASSWORD',
                             'message' => '비밀번호가 일치하지 않습니다.']
             ], 401);
             return;
@@ -244,22 +279,13 @@ class UsersController
 
         echo json_response([
             'success' => true,
-            'data' => [
-                'user' => [
-                    'user_id'    => (int)$row['user_id'],
-                    'account'    => $row['account'],
-                    'user_name'  => $row['user_name'],
-                    'role'       => $row['role']
-                ],
-                'session' => [
-                    'id'  =>  session_id()
-                ]
-            ]
-        ], 200);
-
+           ]);
     }
 
-    // logout
+
+    // ==================
+    // 'delete' => logout
+    // ==================
     public function logout() :void {
         // 지금 session상태가 어떤지 check
         if (session_status() === PHP_SESSION_ACTIVE) {
