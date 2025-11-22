@@ -10,7 +10,9 @@
 
 class TimeoffController {
 
+    // =============================
     // 'GET' -> 디자이너 전체 휴무 출력
+    // =============================
     public function index():void {
         
         try {
@@ -30,14 +32,6 @@ class TimeoffController {
             $stmt->execute();
             $result = $stmt->get_result();
 
-            // 조회된 데이터가 없으면 404 반환
-            if ($result->num_rows === 0) {
-                json_response([
-                    'success' => false
-                ],404);
-                return;
-            }
-
             // 조회된 데이터를 배열에 담기
             $timeoff = [];
             while ($row = $result->fetch_assoc()){
@@ -47,7 +41,7 @@ class TimeoffController {
             // 성공 응답 반환
             json_response([
                 'success' => true,
-                'date' => ['timeoff' => $timeoff]
+                'data' => ['timeoff' => $timeoff]
             ]);
         
         // 예외 처리 (서버내 오류 발생지) 
@@ -58,29 +52,31 @@ class TimeoffController {
             json_response([
                 "success" => false,
                 "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
+                            'message' => '서버 내부 오류가 발생했습니다.'
                 ]],500);
             return;
         }
     }
 
 
+    // ============================
     // 'POST' => designer 휴무 작성
+    // ============================
     public function create():void {
         
-        $date = read_json_body(); // JSON 요청 파싱
+        $data = read_json_body(); // JSON 요청 파싱
         
         // 필드 값 받기 (형변환 포함)
-        $user_id = (int)$date['user_id'] ?? '';
-        $start_at =    (string)$date['start_at'] ?? '';
-        $end_at =    (string)$date['end_at'] ?? '';
+        $user_id   = isset($data['user_id']) ? trim((int)$data['user_id']) : '';
+        $start_at  = isset($data['start_at']) ? trim((string)$data['start_at']) : '';
+        $end_at    = isset($data['end_at']) ? trim((string)$data['end_at']) : '';
 
         // 필드 검증
         if ($user_id === '' || $start_at == ''|| $end_at === '') {
             json_response([
                 'success' => false,
-                'error' => ['code' => 'INVALID_REQUEST',
-                            'message' => '유효하지 않은 요청입니다.']
+                'error' => ['code' => 'VALIDATION_ERROR',
+                            'message' => '필수 필드가 비었습니다.']
             ], 400);
             return;
         }
@@ -95,14 +91,6 @@ class TimeoffController {
             $stmt->bind_param('iss', $user_id, $start_at, $end_at);
             $stmt->execute(); // 실행
 
-            // 영향받은 행이 없다면 실패 처리
-            if ($stmt->affected_rows === 0){
-                json_response([
-                    'success' => false,
-                ], 404);
-                return;
-            } 
-
             // 성공 응답
             json_response([
                 'success' => true
@@ -114,13 +102,16 @@ class TimeoffController {
                 json_response([
                 "success" => false,
                 "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
+                            'message' => '서버 내부 오류가 발생했습니다.'
             ]],500);
             return;
         }
     }
 
+
+    // =============================
     // 'PUT' -> designer 휴무 수정
+    // =============================
     public function update(string $to_id) :void {
         
         # "10", "7", "5" -> ok, int형으로 바꿈 ,  "abc"、""、"0"、"-3" -> fals
@@ -129,37 +120,37 @@ class TimeoffController {
         if ($to_id === false || $to_id <= 0) {
             json_response([
                 'success' => false,
-                'error' => ['code' => 'INVALID_ID',
-                            'massege' => 'ID가 잘못되었습니다. 올바른 숫자 ID를 지정하십시오.']
-            ], 400);
+                'error' => ['code' => 'RESOURCE_NOT_FOUND',
+                            'message' => '요청한 리소스를 찾을 수 없습니다.']
+            ], 404);
             return;
         }
 
         $to_id = (int)$to_id; // 형변환 확정
         
         // 프론트에서 데이터를 받는다
-        $date = read_json_body();
+        $data = read_json_body();
     
-        $start_at = (string)$date['start_at'] ?? '';
-        $end_at = (string)$date['end_at'] ?? '';
+        $start_at  = isset($data['start_at']) ? trim((string)$data['start_at']) : '';
+        $end_at    = isset($data['end_at']) ? trim((string)$data['end_at']) : '';
         
         // 유호성 확인
         if ($start_at === '' || $end_at === '' ) {
             json_response([
                     'success' => false,
                     'error' => ['code' => 'VALIDATION_ERROR',
-                                'message' => '필수 필드가 비었습니다..']
-                ], 422);
+                                'message' => '필수 필드가 비었습니다.']
+                ], 400);
             return;
         }
         // update한 데이터를 넣는 리스트
         $timeoff = [];
         
         // key = value 형태로 리스트에 저장
-        foreach ($date as $key => $value) {
+        foreach ($data as $key => $value) {
                 $value = "?";
-                $v = $key."=".$value;
-                array_push($timeoff, $v);   
+                $timeoff_value = $key."=".$value;
+                array_push($timeoff, $timeoff_value);   
         }
 
         try {
@@ -175,12 +166,11 @@ class TimeoffController {
             
             // 수정된 행이 없다면 데이터 없음 처리
             if ($stmt->affected_rows === 0) {
-                json_response([
-                    
+                json_response([                  
                      "success" => false,
-                     "error" => ['code' => 'RESOURCE_NOT_FOUND',
-                                'message' => '수정할 데이터를 찾을 수 없습니다.']
-                ], 404);
+                     "error" => ['code' => 'NO_CHANGES_APPLIED',
+                                'message' => '수정된 내용이 없습니다.']
+                ], 409);
                 return;
             } 
             
@@ -195,14 +185,16 @@ class TimeoffController {
                 json_response([
                     "success" => false,
                     "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                                'message' => '서버 오류가 발생했습니다.'
+                                'message' => '서버 내부 오류가 발생했습니다.'
                 ]],500);
                 return;
         }
 }
 
 
+    // ==============================
     // 'DELETE' -> designer 휴무 삭제
+    // ==============================
     public function delete(string $to_id):void{
 
         // ID 정수 검증
@@ -210,10 +202,10 @@ class TimeoffController {
         
         if ($to_id === false || $to_id <= 0) {
             json_response([
-                    'success' => false,
-                    'error' => ['code' => 'VALIDATION_ERROR',
-                                'message' => '필수 필드가 비었습니다.']
-            ], 422);
+                'success' => false,
+                'error' => ['code' => 'RESOURCE_NOT_FOUND',
+                            'message' => '요청한 리소스를 찾을 수 없습니다.']
+            ], 404);
             return;
         }
 
@@ -240,15 +232,15 @@ class TimeoffController {
             // 성공 응답
             json_response([
                 'success' => true
-            ]);
+            ], 204);
 
         // 예외 처리 (서버내 오류 발생지)
         } catch (Throwable $e) {
                 error_log('[hairstyle]'.$e->getMessage());
                 json_response([
-                "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
+                    "success" => false,
+                    "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
+                                'message' => '서버 내부 오류가 발생했습니다.'
             ]],500);
             return;
         }      
