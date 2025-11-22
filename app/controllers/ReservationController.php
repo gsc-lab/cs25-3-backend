@@ -8,40 +8,38 @@ use Throwable;
     require_once __DIR__. "/../db.php";
     require_once __DIR__. "/../http.php";
 
+    $user_id = $_SESSION['user']['user_id'];
 
     class ReservationController {
 
-        // ============================
-        // 'GET' -> (클라이언트) 자기 예약 정보 보기
+        private int $user_id;
+        private string $role;
+        public function __construct()
+        {
+            $this->user_id = $_SESSION['user']['user_id'];
+            $this->role    = $_SESSION['user']['role'];
+        }
+
+
+        // =============================================
+        // 'GET' -> 자기 예약 정보 보기 (client, designer)
+        // =============================================
         public function show():void{
-            
-            // 미로그인 상태라면 오류 발생
-            if (empty($_SESSION['user']['user_id'])) {
-                json_response([
-                    'success' => false,
-                    'error' => ['code' => 'UNAUTHENTICATED',
-                                'message' => '인증 정보가 유효하지 않습니다 ']
-                ], 401);
-                return;
-            }
-                        // 로그인된 user인지 확인
-            $user_id = (int)$_SESSION['user']['user_id'];
+
+            $user_id = $this->user_id;
+            $role    = $this->role; 
 
             try {
 
                 $db = get_db();
 
-                if ($_SESSION['user']['role'] === 'designer') {
+                // designer의 경우
+                if ($role === 'designer') {
                     $where = " WHERE r.designer_id = ?";
-                } elseif ($_SESSION['user']['role'] === 'client') {
+                } 
+                // client의 경우 
+                elseif ($role === 'client') {
                     $where = " WHERE r.client_id = ?";
-                } else {
-                    json_response([
-                        'success' => false,
-                        'error' => ['code' => 'FORBIDDEN',
-                                    'message' => '이 작업을 수행할 권한이 없습니다.']
-                    ], 403);
-                    return;
                 }
 
                 $stmt = $db->prepare("SELECT 
@@ -72,19 +70,9 @@ use Throwable;
                 $stmt->bind_param('i', $user_id);
                 $stmt->execute();
                 $result = $stmt->get_result();
-
-                if ($result->num_rows <= 0) {
-                    json_response([
-                        'success' => false,
-                        'error' => ['code' => '',
-                                    'message' => '예약이 없습니다']
-                    ]);
-                    return;
-                }
                 
                 $reservations = [];
-                
-                                
+                                                
                 while ($row = $result->fetch_assoc()) {
                     $rid = $row['reservation_id'];
 
@@ -127,11 +115,11 @@ use Throwable;
             } catch (Throwable $e) {
                 error_log('[reservation_show]'.$e->getMessage());
                 json_response([
-                "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
-                ]],500);
-                return;
+                    "success" => false,
+                    "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
+                                'message' => '서버 오류가 발생했습니다.'
+                    ]],500);
+                    return;
             }
         } 
 
@@ -141,42 +129,24 @@ use Throwable;
     
         public function create():void {
             
-            if (empty($_SESSION['user']['user_id'])) {
-                json_response([
-                    'success' => false,
-                    'error' => ['code' => 'UNAUTHENTICATED',
-                                'message' => '인증 정보가 유효하지 않습니다 ']
-                ], 401);
-                return;
-            } 
-
-            $client_id = (int)$_SESSION['user']['user_id'];
-
-            if ($_SESSION['user']['role'] != 'client') {
-                json_response([
-                    'success' => false,
-                    'error' => ['code' => 'FORBIDDEN',
-                                'message' => '이 작업을 수행할 권한이 없습니다.']
-                ], 403);
-                return;
-            }
+            $user_id = $this->user_id;
 
             // 프론트에서 데이터 받기
             $data = read_json_body();
 
             $designer_id = filter_var($data['designer_id'], FILTER_VALIDATE_INT);
-            $requirement = (string)$data['requirement'] ?? '' ;
-            $service_id = $data['service_id'] ?? '' ;
-            $day = (string)$data['day'] ?? '' ;
-            $start_at = (string)$data['start_at'] ?? '' ;
+            $requirement = isset($data['requirement']) ? (string)$data['requirement'] : '' ;
+            $service_id = isset($data['service_id']) ? $data['service_id'] : '' ;
+            $day = isset($data['day']) ? (string)$data['day'] : '' ;
+            $start_at = isset($data['start_at']) ? (string)$data['start_at'] : '' ;
 
             if ($designer_id === '' || $requirement === '' || $service_id === '' || 
                 $day === '' || $start_at === '' ) {
                     json_response([
                     'success' => false,
                     'error' => ['code' => 'VALIDATION_ERROR',
-                                'message' => '필수 필드가 비었습니다..']
-                ], 422);
+                                'message' => '필수 필드가 비었습니다.']
+                ], 400);
                 return;
             }
 
@@ -231,9 +201,9 @@ use Throwable;
                 if ($check_result->num_rows === 1 || $timeoff_result->num_rows === 1) {
                     json_response([
                         'success' => false,
-                        'error' => ['code' => '',
-                                    'massege' => '선택한 시간은 예약 불가능합니다.']
-                    ],400);
+                        'error' => ['code' => 'TIME_CONFLICT',
+                                    'message' => '선택한 시간은 예약 불가능합니다.']
+                    ],409);
                     return;
                 }
 
@@ -243,7 +213,7 @@ use Throwable;
                                         day, start_at, end_at)
                                         VALUES (?,?,?,?,?,?)");
                 $rv_stmt->bind_param('iissss', 
-                                $client_id, $designer_id, $requirement, 
+                                $user_id, $designer_id, $requirement, 
                                     $day, $start_at, $end_at);
                 $rv_stmt->execute();
                 $rv_id = $rv_stmt->insert_id;
@@ -277,24 +247,15 @@ use Throwable;
         // ======================================
         public function update(string $reservation_id):void {
             
-            // 로그인된 user인지 확인
-            // 미로그인 상태라면 오류 발생
-            if (empty($_SESSION['user']['user_id'])) {
-                json_response([
-                    'success' => false,
-                    'error' => ['code' => 'UNAUTHENTICATED',
-                                'message' => '인증 정보가 유효하지 않습니다 ']
-                ], 400);
-                return;
-            }
-            
+            $role    = $this->role;
+
             $reservation_id = filter_var($reservation_id, FILTER_VALIDATE_INT);
             if ($reservation_id === false || $reservation_id <= 0) {
                 json_response([
                     'success' => false,
-                    'error' => ['code' => 'INVALID_ID',
-                                'message' => 'ID가 잘못되었습니다. 올바른 숫자 ID를 지정하십시오..']
-                ], 400);
+                    'error' => ['code' => 'RESOURCE_NOT_FOUND',
+                                'message' => '요청한 리소스를 찾을 수 없습니다.']
+                ], 404);
                 return;
             }            
 
@@ -304,15 +265,16 @@ use Throwable;
 
                 $db = get_db();
 
-                if ($_SESSION['user']['role'] === 'client') {
-                    $cancel_reason = (string)$data['cancel_reason'] ?? '';
+                if ($role === 'client') {
+
+                    $cancel_reason = isset($data['cancel_reason']) ? (string)$data['cancel_reason'] : '';
 
                     if ($cancel_reason === '') {
                         json_response([
                             'success' => false,
                             'error' => ['code' => 'VALIDATION_ERROR',
-                                        'message' => '필수 필드가 비었습니다..']
-                        ], 422);
+                                        'message' => '필수 필드가 비었습니다.']
+                        ], 400);
                         return;
                     }
 
@@ -326,9 +288,9 @@ use Throwable;
                     if ($stmt->affected_rows === 0) {
                         json_response([
                         "success" => false,
-                        "error" => ['code' => 'RESOURCE_NOT_FOUND',
-                                    'message' => '수정할 데이터를 찾을 수 없습니다.']
-                        ], 404);
+                        "error" => ['code' => 'NO_CHANGES_APPLIED',
+                                    'message' => '수정된 내용이 없습니다.']
+                        ], 409);
                         return;
                     }
 
@@ -337,16 +299,16 @@ use Throwable;
                     ]);
                 
                 // designer 수정
-                } elseif ($_SESSION['user']['role'] === 'designer') {
+                } elseif ($role === 'designer') {
                     
-                    $status = (string)$data['status'] ?? '';
+                    $status = isset($data['status']) ? (string)$data['status'] : '';
 
                     if ($status === '') {
                         json_response([
                             'success' => false,
                             'error' => ['code' => 'VALIDATION_ERROR',
                                         'message' => '필수 필드가 비었습니다..']
-                        ], 422);
+                        ], 400);
                         return;
                     }
 
@@ -357,9 +319,9 @@ use Throwable;
                     if ($stmt->affected_rows === 0) {
                         json_response([
                             "success" => false,
-                            "error" => ['code' => 'RESOURCE_NOT_FOUND',
-                                        'message' => '수정할 데이터를 찾을 수 없습니다.']
-                        ], 404);
+                            "error" => ['code' => 'NO_CHANGES_APPLIED',
+                                        'message' => '수정된 내용이 없습니다.']
+                        ], 409);
                         return;
                     }
 
