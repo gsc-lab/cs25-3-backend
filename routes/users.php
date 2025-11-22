@@ -7,7 +7,7 @@ function registerUsers(AltoRouter $router): void {
     // ========================
     // 회원 정보 보기 (login필수)
     // ========================
-    $router->map('GET', "/users/[a:account]",
+    $router->map('GET', "/users",
      [  'controller' => 'UsersController',
                 'action'     => 'show',
                 'middleware' => ['login']
@@ -25,7 +25,7 @@ function registerUsers(AltoRouter $router): void {
     // =============
     // 회원 정보 수정 
     // =============
-    $router->map('PUT', "/users/update/[a:account]",
+    $router->map('PUT', "/users/update",
     [   'controller' => 'UsersController',
                 'action'     => 'update',
                 'middleware' => ['login']
@@ -34,7 +34,7 @@ function registerUsers(AltoRouter $router): void {
     // ============================
     // 회원 탈퇴 (login필수)(client 만)
     // ============================
-    $router->map('DELETE', "/users/delete/[a:account]",
+    $router->map('DELETE', "/users/delete",
      [  'controller' => 'UsersController',
                 'action'     => 'delete',
                 'middleware' => ['login', 'client']
