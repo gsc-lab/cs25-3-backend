@@ -12,10 +12,12 @@ use Throwable;
     class DesignerController{
 
 
+        // 로그인한 사용자 ID 저장
         private ?int $user_id = null;
 
         public function __construct(){
 
+            // 세션 값이 존재하면 user_id 저장
             if (isset($_SESSION['user'])){
                 $this->user_id = $_SESSION['user']['user_id'];
             }
@@ -75,6 +77,7 @@ use Throwable;
                 return;
             }  
         }
+
 
         // ===============================
         // 'GET' -> 해당 Designer정보 보기
@@ -258,9 +261,16 @@ use Throwable;
 
 
         
-        // ===============================
-        // 'PUT' -> Designer정보 수정
-        // ===============================
+        
+        /**
+        * ===============================
+        * 'PUT' -> Designer정보 수정
+        * ===============================
+        * 텍스트 정보 수정 (good_at, personality, message)
+        *  - body: JSON
+        *  - 이미지는 그대로 두고 싶을 때 사용
+        *  ※ 이미지까지 변경하고 싶으면 아래 updateImage() 같은 별도 엔드포인트 쓰는 게 깔끔함
+        */
         public function update(string $designer_id):void {
             
             // ID 정수 유효성 검사
@@ -297,8 +307,10 @@ use Throwable;
                 $params = [];
                 $types  = '';
 
+                // 수정 가능 필드만 허용
                 $allowed = ['good_at', 'personality', 'message'];
 
+                // Body에 포함된 필드만 수정 대상으로 적용
                 foreach ($allowed as $field) {
                     if (array_key_exists($field, $data)) {
                         $value = trim((string)$data[$field]);
@@ -319,6 +331,7 @@ use Throwable;
                     }
                 }
 
+                // 수정할 필드가 없을 때
                 if (empty($fields)) {
                     json_response([
                         'success' => false,
@@ -373,8 +386,12 @@ use Throwable;
 
 
 
+        // ===============================================
+        // 'PUT' -> 디자이너 이미지 수정
+        // ===============================================
         public function updateImage(string $designer_id):void {
 
+            // ID 유효성 검사
             $designer_id = filter_var($designer_id, FILTER_VALIDATE_INT);
 
             if ($designer_id === false || $designer_id <= 0) {
@@ -388,6 +405,7 @@ use Throwable;
                 return;
             }
 
+            // 파일 유무 확인
             if (empty($_FILES['image'])){
                 json_response([
                     'success' => false,
@@ -437,10 +455,12 @@ use Throwable;
 
                 $imageService = new ImageService();
 
+                // 새로 업로드
                 $uploadResult = $imageService->upload($file, 'designer');
                 $newKey       = $uploadResult['key'];
                 $newUrl       = $uploadResult['url'];
 
+                // 기존 이미지 삭제 (실패하더라도 서비스 자체는 계속)
                 try {
                     if (!empty($current['image_key'])) {
                         $imageService->delete($current['image_key']);
@@ -449,6 +469,7 @@ use Throwable;
                     error_log('[designer_updateImage_delete_old] ' . $e->getMessage());   
                 }
 
+                // DB 수정
                 $stmt = $db->prepare("UPDATE Designer SET 
                                             image = ?, image_key = ? 
                                             WHERE designer_id = ?");
@@ -477,6 +498,7 @@ use Throwable;
         // ===============================
         // 'DELETE' -> Designer정보 삭제
         // ===============================
+        // DB 레코드 + R2 이미지 같이 삭제
         public function delete(string $designer_id):void {
             
             $designer_id = filter_var($designer_id, FILTER_VALIDATE_INT);
@@ -495,6 +517,7 @@ use Throwable;
                 
                 $db = get_db(); // DB접속
 
+                // 0) 먼저 image_key 조회
                 $stmt = $db->prepare("SELECT image_key FROM Designer WHERE designer_id = ?");
                 $stmt->bind_param('i', $designer_id);
                 $stmt->execute();
@@ -514,6 +537,7 @@ use Throwable;
 
                 $imageKey = $row['image_key'] ?? null;
 
+                // 1) R2 이미지 삭제
                 if ($imageKey) {
                     $imageService = new ImageService();
                     try {
@@ -525,7 +549,7 @@ use Throwable;
                     }
                 }
 
-                // DELETE SQL문
+                // 2) DB 삭제
                 $stmt2 = $db->prepare("DELETE FROM Designer WHERE designer_id=?");
                 $stmt2->bind_param('i', $designer_id);
                 // 실행
