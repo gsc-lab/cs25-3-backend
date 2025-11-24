@@ -13,14 +13,14 @@ function registerDesigner(AltoRouter $router):void{
                 'middleware' => []
             ]);
                 
-    // // ===============================
-    // // 해당하는 Designer정보 보기 
-    // // ===============================
-    // $router->map("GET", '/designer/[a:designer_id]',
-    // [  'controller' => 'DesignerController',
-    //             'action'     => 'show',
-    //             'middleware' => ['login']
-    //         ]);
+    // ===============================
+    // 해당하는 Designer정보 보기 
+    // ===============================
+    $router->map("GET", '/designer/[a:designer_id]',[
+                'controller' => 'DesignerController',
+                'action'     => 'show',
+                'middleware' => ['login','designer']
+            ]);
             
     // =============================================
     // designer 프로필 작성하기 (login필수)(designer만)
