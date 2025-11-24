@@ -296,7 +296,9 @@ class UsersController
                         $p['path'], $p['domain'], $p['secure'], $p['httponly']);
                         session_destroy();
             }
-            http_response_code(204);
+            json_response([
+                'success' => true
+            ], 204);
         }
     }
 }

@@ -58,6 +58,7 @@ VALUES
 
 CREATE TABLE IF NOT EXISTS Salon (
     image JSON NOT NULL COMMENT 'URL 배열 (캐러셀)',
+    image_key VARCHAR(255) NOT NULL,
     introduction TEXT NOT NULL,
     information JSON NOT NULL COMMENT 'Address, OpeningHour, Holiday, Phone',
     map VARCHAR(255) NOT NULL,
@@ -75,7 +76,7 @@ CREATE TABLE IF NOT EXISTS Service (
     service_id INT AUTO_INCREMENT,
     service_name VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) NOT NULL,
-    duration_min INT NOT NULL DEFAULT 60,
+    duration_min INT NOT NULL ,
     PRIMARY KEY (service_id)
 );
 
@@ -127,6 +128,7 @@ CREATE TABLE IF NOT EXISTS Designer (
     designer_id INT AUTO_INCREMENT,
     user_id INT NOT NULL,
     image VARCHAR(255) NOT NULL,
+    image_key VARCHAR(255) NOT NULL,
     experience INT NOT NULL,
     good_at VARCHAR(255) NOT NULL,
     personality VARCHAR(255) NOT NULL,
@@ -139,9 +141,9 @@ CREATE TABLE IF NOT EXISTS Designer (
 );
 
 INSERT INTO Designer 
-    (user_id, image, experience, good_at, personality, message)
-    VALUES (1, "designer1", 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
-    (2, "designer2", 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
+    (user_id, image, image_key, experience, good_at, personality, message)
+    VALUES (1, "designer1", "designer1", 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
+    (2, "designer2", "designer2", 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
 
 
 
@@ -150,6 +152,7 @@ CREATE TABLE IF NOT EXISTS News (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     file VARCHAR(255),
+    file_key VARCHAR(255),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (news_id)
