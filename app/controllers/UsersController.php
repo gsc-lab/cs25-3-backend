@@ -279,7 +279,15 @@ class UsersController
 
         echo json_response([
             'success' => true,
-           ]);
+                'data' => [
+                'user' => [
+                    'user_id'    => (int)$row['user_id'],
+                    'account'    => $row['account'],
+                    'user_name'  => $row['user_name'],
+                    'role'       => $row['role']
+                ]
+            ]
+        ]);
     }
 
 
@@ -296,7 +304,9 @@ class UsersController
                         $p['path'], $p['domain'], $p['secure'], $p['httponly']);
                         session_destroy();
             }
-            http_response_code(204);
+            json_response([
+                'success' => true
+            ], 204);
         }
     }
 }
