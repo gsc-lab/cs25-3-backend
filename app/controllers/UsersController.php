@@ -277,9 +277,17 @@ class UsersController
             'user_name' => $row['user_name']
         ];
 
-        echo json_response([
+        json_response([
             'success' => true,
-           ]);
+            'data' => [
+                'user' => [
+                    'user_id'   => (int)$row['user_id'],
+                    'account'   => $row['account'],
+                    'role'      => $row['role'],
+                    'user_name' => $row['user_name'],
+                ]
+            ]
+        ]);
     }
 
 

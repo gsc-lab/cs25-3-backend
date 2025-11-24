@@ -57,7 +57,7 @@ VALUES
 
 
 CREATE TABLE IF NOT EXISTS Salon (
-    image JSON NOT NULL COMMENT 'URL 배열 (캐러셀)',
+    image VARCHAR(255) NOT NULL COMMENT 'URL 배열 (캐러셀)',
     image_key VARCHAR(255) NOT NULL,
     introduction TEXT NOT NULL,
     information JSON NOT NULL COMMENT 'Address, OpeningHour, Holiday, Phone',
@@ -67,10 +67,24 @@ CREATE TABLE IF NOT EXISTS Salon (
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO Salon (image, introduction, information, map, traffic)
-                     VALUES ('["image1.jpg", "image2"]', 'Make your dreams come true', '["We always keep up with the latest trends and propose styles that will bring out your individuality.","Our experienced stylists will carefully listen to your concerns and wishes. Let/''s work together to create your ideal hairstyle."]',
-                            'Daegu', '["bus", "train", "car"]');
-
+-- 살롱 데이터
+INSERT INTO Salon (image, image_key, introduction, information, map, traffic) VALUES (
+    "https://pub-08298820ca884cc49d536c1b0ce8b7c4.r2.dev/salon/1.jpg",
+    "salon/1.jpg",
+    "저희 살롱은 고객 개개인의 스타일을 존중하며 맞춤형 서비스를 제공합니다.",
+    JSON_OBJECT(
+        "address", "대구광역시 북구 복현로 35",
+        "opening_hour", "10:00 - 19:00",
+        "holiday", "일요일",
+        "phone", "010-4819-7975"
+    ),
+    "https://pub-08298820ca884cc49d536c1b0ce8b7c4.r2.dev/salon/1.png",
+    JSON_OBJECT(
+        "bus", "706, 719, 730, 북구2",
+        "parking", "영진전문대 정문 주차장 이용 가능 (방문객 30분 무료)",
+        "directions", "대구 1호선 칠곡경대병원역 3번 출구 기준 도보 10분"
+    )
+);
 
 CREATE TABLE IF NOT EXISTS Service (
     service_id INT AUTO_INCREMENT,
@@ -139,13 +153,6 @@ CREATE TABLE IF NOT EXISTS Designer (
     CONSTRAINT uq_designer_user UNIQUE (user_id),
     CONSTRAINT fk_designer_user FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
-
-INSERT INTO Designer 
-    (user_id, image, image_key, experience, good_at, personality, message)
-    VALUES (1, "designer1", "designer1", 3, '레이어드컷', '활발하다', '예쁜 공간에서 이미지와 1: 1 맞춤 상담을 통해 진심을 담아 디자인을 선물해드리겠습니다:)'),
-    (2, "designer2", "designer2", 10, '내추럴 스타일', '조용하다', '최손을 다해서 고객님에 잘 올리는 스타일을 제공합니다.');
-
-
 
 CREATE TABLE IF NOT EXISTS News (
     news_id INT AUTO_INCREMENT,

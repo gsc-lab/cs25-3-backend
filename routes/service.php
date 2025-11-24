@@ -38,5 +38,12 @@
                     'action'     => 'delete',
                     'middleware' => ['login', 'manager']
                 ]);
+
+
+        $router->map('GET',"/service/[a:service_id]",
+                [   'controller' =>  'ServiceController',
+                    'action'     => 'show',
+                    'middleware' => []
+                ]);
     }
 ?>

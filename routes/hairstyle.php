@@ -29,7 +29,7 @@ function registerHairstyle(AltoRouter $router) :void {
     $router->map("POST", '/hairstyle/create', [
                 'controller'  => 'HairstyleController',
                 'action'     => 'create',
-                'middleware' => []
+                'middleware' => ['login', 'manager']
             ]); 
             
             

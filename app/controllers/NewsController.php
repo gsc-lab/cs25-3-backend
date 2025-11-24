@@ -35,7 +35,7 @@ class NewsController {
             // 파일이 전달되었는지 확인
             if (!isset($_FILES['image'])) {
                 json_response([
-                    'seccrec' => false,
+                    'success' => false,
                     'error' => [
                         'code' => 'NO_FILE',
                         'message' => 'image 파일이 전달되지 않았습니다.']
@@ -61,7 +61,7 @@ class NewsController {
 
             // 이미지 업로드 서비스 호출
             $imageService = new ImageService();
-            $uploadResult = $imageService->upload($file, 'hairstyle');
+            $uploadResult = $imageService->upload($file, 'news');
             
             // 업로드 후 반환된 파일의 key, url
             $fileKey     = $uploadResult['key'];
@@ -73,7 +73,7 @@ class NewsController {
             // sql문
             $stmt = $db->prepare("INSERT INTO News 
                                 (title,  content, file, file_key) 
-                                VALUES (?,?,?)");
+                                VALUES (?,?,?, ?)");
             $stmt->bind_param('ssss',$title, $content, $fileUrl, $fileKey);
             $stmt->execute();
 
@@ -271,19 +271,6 @@ class NewsController {
                 $types   .= 's';
             }
         }
-
-        // 수정할 데이터가 하나도 없으면 오류
-        if (empty($field)) {
-            json_response([
-                'success' => false,
-                'error'   => [
-                        'code'    => 'NO_FIELDS_TO_UPDATE',
-                        'message' => '수정할 필드가 없습니다.',
-                    ],
-                ], 400);
-                return;
-            }
-        
         
         try {
 
@@ -291,27 +278,16 @@ class NewsController {
             $db = get_db();
 
             // update SQL문
-            $stmt = $db->prepare("UPDATE News SET"
+            $stmt = $db->prepare("UPDATE News SET "
                                 . implode(',', $fields). 
                                   " WHERE news_id=?");
             // 마지막에 news_id 추가
             $types .= 'i';
             $params[] = $news_id;
             // 가변 인자 바인딩
-            $stmt->bind_param($types, $params);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
             
-            // 변경된 행이 없을 때
-            if ($db->affected_rows === 0) {
-                json_response([
-                    'success' => false,
-                    'error'   => [
-                        'code'    => 'NO_CHANGES_APPLIED',
-                        'message' => '수정된 내용이 없습니다.'
-                    ]
-                ], 409);
-                return;
-            }
             $stmt->close();
 
             // update 정보 가져오기
@@ -332,7 +308,7 @@ class NewsController {
             error_log('[news_update]'.$e->getMessage());
             json_response([
                 "success" => false,
-                "error" => ["code" => "VALIDATION_ERROR",
+                "error" => ["code" => "INTERNAL_SERVER_ERROR",
                             "message" => "서버 오류가 발생했습니다." ]
             ], 500);
             return;
@@ -342,7 +318,7 @@ class NewsController {
 
 
     // ==========================
-    // PUT /news/:id/image — 이미지 변경
+    // PUT /news/image/:id — 이미지 변경
     // ==========================
     // --- updateImage 메서드는 뉴스 글의 '이미지만' 수정하는 기능을 담당합니다.
     // --- 클라이언트는 PUT /news/{id}/image 와 같은 요청을 보내며
