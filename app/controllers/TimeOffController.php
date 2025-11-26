@@ -1,13 +1,12 @@
 <?php
 
+namespace App\Controllers;
 
- namespace App\Controllers;
+use Throwable;
+use App\Errors\ErrorHandler;
 
-    use Throwable;
-    use App\Errors\ErrorHandler;
-
-    require_once __DIR__ . "/../db.php";
-    require_once __DIR__ . "/../http.php";
+require_once __DIR__ . "/../db.php";
+require_once __DIR__ . "/../http.php";
 
 class TimeoffController {
 
@@ -243,9 +242,3 @@ class TimeoffController {
         }      
     }
 }
-
-
-
-
-
-?>
