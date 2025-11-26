@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS Users (
     PRIMARY KEY (user_id)
 );
 
--- 💡 FK 충족을 위해 Users 샘플(특정 ID 3,5) 삽입
 INSERT INTO Users (account, password, user_name, role, gender, phone, birth)
 VALUES
 ('designer1',SHA2('1111',256), '디자이너1', 'designer', 'M', '010-3333-3333', '1995-03-03'),

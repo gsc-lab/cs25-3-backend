@@ -109,40 +109,51 @@ class NewsController {
     // ==========================
     // 'GET' -> News 글 전체 보기
     // ==========================
-    public function index():void{
-
+    public function index():void
+    {
         try {
-            // DB접속
             $db = get_db();
-            // SELECT로 News테이블에 있는 모둔 글을 불어오기
-            $stmt = $db->prepare("SELECT * FROM News ORDER BY news_id DESC");
+
+            // 쿼리스트링 limit 파라미터 처리
+            $limit = null;
+            if (isset($_GET['limit'])) {
+                $limit = filter_var($_GET['limit'], FILTER_VALIDATE_INT);
+            }
+
+            // 기본 쿼리
+            $sql = "SELECT * FROM News ORDER BY news_id DESC";
+            if ($limit !== null) {
+                $sql .= " LIMIT ?";
+            }
+
+            $stmt = $db->prepare($sql);
+            if ($limit !== null) {
+                $stmt->bind_param('i', $limit);
+            }
             $stmt->execute();
             $result = $stmt->get_result();
-            
-            // News전체 글을 넣는 리스트 만들기
+
             $news = [];
-            
-            // 행을 하나 씩 $rows에 넣는다 
-            while($row = $result->fetch_assoc()){
-                array_push($news, $row);
+            while ($row = $result->fetch_assoc()) {
+                $news[] = $row;
             }
-            
-            // 프론트엔드에 정보 보내기
+
             json_response([
                 "success" => true,
-                'data' => ['news' => $news]
+                "data"    => ['news' => $news],
             ]);
 
-        } catch (Throwable $e){
+        } catch (Throwable $e) {
             error_log('[news_index]'. $e->getMessage());
             json_response([
                 "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
-            ]],500);
+                "error"   => [
+                    'code'    => 'INTERNAL_SERVER_ERROR',
+                    'message' => '서버 오류가 발생했습니다.'
+                ]
+            ], 500);
             return;
         }
-        
     }
 
 

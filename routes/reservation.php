@@ -17,7 +17,7 @@ function registerReservation(AltoRouter $router): void {
     // ===========================
     // 예약하기(login필수)( client)
     // ===========================        
-    $router->map('POST', "/reservation/create",[
+    $router->map('POST', "/reservation",[
                 'controller' => 'ReservationController',
                 'action'     => 'create',
                 'middleware' => ['login', 'client'] 
