@@ -287,7 +287,7 @@ class NewsController {
             // 가변 인자 바인딩
             $stmt->bind_param($types, ...$params);
             $stmt->execute();
-            
+
             $stmt->close();
 
             // update 정보 가져오기
@@ -397,8 +397,8 @@ class NewsController {
 
             // 기존 이미지가 있다면 삭제 시도
             try {
-                if (!empty($current['image_key'])) {
-                    $imageService->delete($current['image_key']);
+                if (!empty($current['file_key'])) {
+                    $imageService->delete($current['file_key']);
                 }
             } catch (Throwable $e){
                 // 이미지 삭제 실패해도 글 수정은 계속

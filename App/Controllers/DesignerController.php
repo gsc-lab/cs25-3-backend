@@ -377,9 +377,9 @@ use Throwable;
 
 
         // ===============================================
-        // 'PUT' -> 디자이너 이미지 수정
+        // 'POST' -> 디자이너 이미지 수정
         // ===============================================
-        public function updateFile(string $designer_id):void {
+        public function updateImage(string $designer_id):void {
 
             // ID 유효성 검사
             $designer_id = filter_var($designer_id, FILTER_VALIDATE_INT);

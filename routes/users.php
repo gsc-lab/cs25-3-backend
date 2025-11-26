@@ -10,7 +10,7 @@ function registerUsers(AltoRouter $router): void {
     $router->map('GET', "/users",
      [  'controller' => 'UsersController',
                 'action'     => 'show',
-                'middleware' => ['login']
+                'middleware' => []
             ]);
     
     // ================
@@ -19,7 +19,7 @@ function registerUsers(AltoRouter $router): void {
     $router->map('POST', "/users/create",
     [   'controller' => 'UsersController',
                 'action'     => 'create',
-                'middleware' => ['guest']
+                'middleware' => []
             ]); 
     
     // =============
@@ -50,12 +50,12 @@ function registerUsers(AltoRouter $router): void {
             ]);  
     
     // ==================
-    // 로그아웃(login필수) 
+    // 로그아웃
     // ==================
-    $router->map('DELETE', "/users/logout", 
+    $router->map('POST', "/users/logout", 
     [   'controller' => 'UsersController',
                 'action'     => 'logout',
-                'middleware' => ['login']]); 
+                'middleware' => []]);
 }
 
 ?>

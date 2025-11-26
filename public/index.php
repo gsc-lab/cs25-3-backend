@@ -1,6 +1,21 @@
 <?php
 declare(strict_types=1);
 
+// 쿠키 만료시간 1시간
+$sessionLifetime = 3600;
+
+// 세션 만료 정리 시간 설정
+ini_set('session.gc_maxlifetime', (string)$sessionLifetime);
+
+// 세션 쿠키 설정
+session_set_cookie_params([
+    'lifetime' => $sessionLifetime,
+    'path'     => '/',
+    'secure'   => false,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
 session_start();
 
 // Composer 오토로드 불러오기

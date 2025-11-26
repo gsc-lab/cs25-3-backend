@@ -54,9 +54,9 @@ function registerDesigner(AltoRouter $router):void{
     // ===============================================
     // 이미지 업데이트 (login필수)(designer만)
     // =============================================== 
-    $router->map("POST", '/designer/file/[a:designer_id]', [
+    $router->map("POST", '/designer/image/[a:designer_id]', [
                 'controller' => 'DesignerController',
-                'action'     => 'updateFile',
+                'action'     => 'updateImage',
                 'middleware' => ['login', 'designer']
                 ]);  // 이미지 올리기
 }
