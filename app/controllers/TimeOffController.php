@@ -4,6 +4,7 @@
  namespace App\Controllers;
 
     use Throwable;
+    use App\Errors\ErrorHandler;
 
     require_once __DIR__ . "/../db.php";
     require_once __DIR__ . "/../http.php";
@@ -47,14 +48,7 @@ class TimeoffController {
         // 예외 처리 (서버내 오류 발생지) 
         } catch (Throwable $e) {
             // 에러 내용을 서버 로그에 기록
-            error_log('[timeoff_index]'.$e->getMessage());
-            // 500 서버 오류 전달
-            json_response([
-                "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 내부 오류가 발생했습니다.'
-                ]],500);
-            return;
+            json_response(ErrorHandler::server($e, '[timeoff_index]'),500);
         }
     }
 
@@ -85,11 +79,32 @@ class TimeoffController {
             
             $db = get_db(); // DB 연결
 
+            // designer account를 선택하지 않는 경우는 오류 표시 하기 위해 검사하기
+            $stmt = $db->prepare("SELECT 1 
+                                        FROM Users WHERE 
+                                        user_id = ? 
+                                        AND role = 'designer'");
+            $stmt->bind_param('i', $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows !== 1) {
+                json_response([
+                    'success' => false,
+                    'error'   => [
+                        'code'    => '',
+                        'message' => 'designer가 아닙니다.'
+                        ]
+                    ], 400);
+                    return;
+                }
+
             // INSERT 문 작성
-            $stmt = $db->prepare("INSERT INTO TimeOff (user_id, start_at, end_at) 
-                                    VALUES (?,?,?)");
-            $stmt->bind_param('iss', $user_id, $start_at, $end_at);
-            $stmt->execute(); // 실행
+            $stmt2 = $db->prepare("INSERT INTO TimeOff 
+                                        (user_id, start_at, end_at) 
+                                        VALUES (?,?,?)");
+            $stmt2->bind_param('iss', $user_id, $start_at, $end_at);
+            $stmt2->execute(); // 실행
 
             // 성공 응답
             json_response([
@@ -98,13 +113,7 @@ class TimeoffController {
 
         // 예외 처리 (서버내 오류 발생지) 
         } catch (Throwable $e) {
-                error_log('[timeoff_create]'.$e->getMessage());
-                json_response([
-                "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 내부 오류가 발생했습니다.'
-            ]],500);
-            return;
+                json_response(ErrorHandler::server($e,'[timeoff_create]'), 500);
         }
     }
 
@@ -181,13 +190,7 @@ class TimeoffController {
         
         // 예외 처리 (서버내 오류 발생지)
         } catch (Throwable $e) {
-                error_log('[timeoff_update]'.$e->getMessage());
-                json_response([
-                    "success" => false,
-                    "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                                'message' => '서버 내부 오류가 발생했습니다.'
-                ]],500);
-                return;
+            json_response(ErrorHandler::server($e, '[timeoff_update]'), 500);
         }
 }
 
@@ -236,13 +239,7 @@ class TimeoffController {
 
         // 예외 처리 (서버내 오류 발생지)
         } catch (Throwable $e) {
-                error_log('[hairstyle]'.$e->getMessage());
-                json_response([
-                    "success" => false,
-                    "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                                'message' => '서버 내부 오류가 발생했습니다.'
-            ]],500);
-            return;
+            json_response(ErrorHandler::server($e, '[timeoff_delete]'), 500);
         }      
     }
 }
