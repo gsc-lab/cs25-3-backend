@@ -110,86 +110,85 @@ use ValueError;
         // ========================
         // 'PUT' -> service내용 수정
         // ========================
-        public function update(string $service_id) : void {
-
-            $service_id = (int)$service_id ?? 0;
+        public function update(string $service_id) : void
+        {
+            // ID 정수 변환
+            $service_id = filter_var($service_id, FILTER_VALIDATE_INT);
 
             if ($service_id === false || $service_id <= 0) {
                 json_response([
                     "success" => false,
-                    "error" => ["code" => "RESOURCE_NOT_FOUND",
-                                "message" => "요청한 리소스를 찾을 수 없습니다."
+                    "error" => [
+                        "code" => "RESOURCE_NOT_FOUND",
+                        "message" => "요청한 리소스를 찾을 수 없습니다."
                     ]
-                ],404);
+                ], 404);
                 return;
             }
 
-
-             // 프론트에서 입력 정보 받기
+            // 프론트에서 입력 정보 받기
             $data = read_json_body();
 
             $service_name = isset($data['service_name']) ? trim((string)$data['service_name']) : '';
             $price        = isset($data['price']) ? trim((string)$data['price']) : '';
-            $duration_min = isset($data['duration_min']) ? trim((int)$data['duration_min']) : '';
+            $duration_min = isset($data['duration_min']) ? (int)$data['duration_min'] : 0;
 
-             // 유호성 검사
-            if ($service_name === '' || $price === '' || $duration_min === '') {
+            // 유효성 검사
+            if ($service_name === '' || $price === '' || $duration_min <= 0) {
                 json_response([
                     "success" => false,
-                    "error" => ['code' => 'VALIDATION_ERROR', 
-                                'message' => '필수 필드가 비었습니다.']
+                    "error" => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => '필수 필드가 비었습니다.'
+                    ]
                 ], 400);
                 return;
             }
 
-            // update한 내용을 저장하는 리스터
-            $update_service = [];
-            
-            // 반복문을 사용해서 Key => Value형태로 리스터에 넣기
-            foreach ($data as $key => $value) {
-                $value = "?";
-                // 유호하면 예) service_name = ? 형태로 변환하기
-                $update_value = $key ."=".$value;
-                // 리스터에 넣기
-                array_push($update_service, $update_value);
-            }            
-            
             try {
-                // DB접속
                 $db = get_db();
 
-                // update sql문
-                $stmt = $db->prepare("UPDATE Service SET "
-                                    .implode(",", $update_service).
-                                    " WHERE service_id=?");
-                $stmt->bind_param('ssii', 
-                                $service_name, $price, $duration_min, $service_id);
-                // 실행
+                $stmt = $db->prepare("
+                    UPDATE Service
+                    SET service_name = ?,
+                        price        = ?,
+                        duration_min = ?
+                    WHERE service_id  = ?
+                ");
+
+                $stmt->bind_param('ssii',
+                    $service_name,
+                    $price,
+                    $duration_min,
+                    $service_id
+                );
+
                 $stmt->execute();
 
-                if($db->affected_rows === 0){
+                if ($db->affected_rows === 0) {
+                    // 없는 ID이거나 값이 완전히 동일한 경우
                     json_response([
                         "success" => false,
                         "error" => [
-                                "code" => "NO_FIELDS_PROVIDED",
-                                "message" => "수정된 내용이 없습니다."
+                            "code" => "RESOURCE_NOT_FOUND",
+                            "message" => "수정할 데이터를 찾을 수 없습니다."
                         ]
-                    ], 409);
+                    ], 404);
                     return;
                 }
-                // 수정 성공
+
                 json_response([
                     "success" => true
-                ], 201);
-            
+                ], 201); // 프론트가 201을 기대하고 있으니 그대로
             } catch (Throwable $e) {
                 error_log('[service_update]'.$e->getMessage());
                 json_response([
                     "success" => false,
-                    "error" => ['code' => 'INTERNAL_SERVER_ERROR',
-                                'message' => '서버 내부 오류가 발생했습니다.']
+                    "error" => [
+                        'code' => 'INTERNAL_SERVER_ERROR',
+                        'message' => '서버 내부 오류가 발생했습니다.'
+                    ]
                 ], 500);
-                return;
             }
         }
 
@@ -247,6 +246,47 @@ use ValueError;
                 return;
             }
         }
+
+        // 'GET' -> service내용 전체 반환하기
+        public function show(string $service_id) :void {
+            
+            try{
+                // DB접속
+                $db = get_db();
+
+                // Service테이블의 세부 내용 가져오기
+                // sql문
+                $stmt = $db->prepare("SELECT service_id, service_name, price, duration_min FROM Service WHERE service_id=?");
+                $stmt->bind_param('i', $service_id);
+                // 실행
+                $stmt->execute();
+                // 결과 받기
+                $result = $stmt->get_result();
+                
+                // 반복문을 사용해서 모든 레코드를 리스트에 넣기
+                $row = $result->fetch_assoc();
+                
+                // 프런트엔드에 리스터를 반환
+                json_response([
+                    "success" => true,
+                    "data" => [
+                                'service_name' => $row['service_name'],
+                                'price' => $row['price'],
+                                'duration_min' => $row['duration_min']
+                              ] 
+                ]);
+
+            } catch (Throwable $e) {
+                error_log('[service_index]' . $e->getMessage());
+                json_response([
+                    "success" => false,
+                    "error" => ['code' => 'INTERNAL_SERVER_ERROR',
+                                'message' => '서버 내부 오류가 발생했습니다.']
+                ], 500);
+                throw($e);
+            }
+        }
     }
+    
 
 ?>
