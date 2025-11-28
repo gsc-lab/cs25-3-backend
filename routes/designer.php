@@ -50,5 +50,14 @@ function registerDesigner(AltoRouter $router):void{
                 'middleware' => ['login', 'manager']
             ]); // 해당하는 Designer정보 삭제
 
+
+    // ===============================================
+    // 이미지 업데이트 (login필수)(designer만)
+    // =============================================== 
+    $router->map("POST", '/designer/image/[a:designer_id]', [
+                'controller' => 'DesignerController',
+                'action'     => 'updateImage',
+                'middleware' => ['login', 'designer']
+                ]);  // 이미지 올리기
 }
 ?>

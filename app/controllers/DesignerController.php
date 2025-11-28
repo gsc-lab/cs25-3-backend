@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Controllers;
+namespace App\Controllers;
 
 use App\Services\ImageService;
 use RuntimeException;
@@ -36,6 +36,7 @@ use Throwable;
                 // Designer + Users JOIN해서 전체 정보 조회
                 $stmt = $db->prepare("SELECT 
                                             d.designer_id,
+                                            d.user_id,
                                             u.user_name,
                                             d.image,
                                             d.image_key,
@@ -61,6 +62,7 @@ use Throwable;
                 
                 // 프론트에 반환
                 json_response([
+                    'success' => true,
                     'data' => ['designer' => $designers]
                 ]);
             
@@ -215,7 +217,7 @@ use Throwable;
                 $db = get_db(); // DB접속
                 $stmt = $db->prepare("INSERT INTO Designer
                                     (user_id, image, image_key, experience, good_at, personality, message)
-                                    VALUES (?, ?, ?, ?, ?, ?)"
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)"
                                     );
                 $stmt->bind_param('ississs', 
                             $user_id, $imageUrl, $imageKey, $experience, $good_at, $personality, $message);
@@ -243,7 +245,7 @@ use Throwable;
                     'success' => false,
                     'error'   => [
                         'code'    => 'UPLOAD_FAILED',
-                        'message' => '이미지 업로드에 실패했습니다.',
+                        'message' => '업로드에 실패했습니다.',
                     ],
                 ], 500);
             } catch (Throwable $e) {
@@ -308,7 +310,7 @@ use Throwable;
                 $types  = '';
 
                 // 수정 가능 필드만 허용
-                $allowed = ['good_at', 'personality', 'message'];
+                $allowed = ['experience', 'good_at', 'personality', 'message'];
 
                 // Body에 포함된 필드만 수정 대상으로 적용
                 foreach ($allowed as $field) {
@@ -351,20 +353,8 @@ use Throwable;
                                     ." WHERE designer_id=?");
                 $types .= 'i';
                 $params[] = $designer_id;
-                $stmt->bind_param($types,$params);
+                $stmt->bind_param($types, ...$params);
                 $stmt->execute();
-
-                // 수정된 행이 없을 경우
-                if ($stmt->affected_rows === 0) {
-                    json_response([
-                        "success" => false,
-                        "error" => [
-                            'code'    => 'NO_CHANGES_APPLIED',
-                            'message' => '수정된 내용이 없습니다.'
-                            ]
-                    ], 409);
-                    return;
-                }
 
                 json_response([
                     'success' => true
@@ -387,7 +377,7 @@ use Throwable;
 
 
         // ===============================================
-        // 'PUT' -> 디자이너 이미지 수정
+        // 'POST' -> 디자이너 이미지 수정
         // ===============================================
         public function updateImage(string $designer_id):void {
 
