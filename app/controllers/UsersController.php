@@ -246,6 +246,16 @@ class UsersController
         $stmt->bind_param('ss',$account, $role);
         $stmt->execute();
         $result = $stmt->get_result();
+
+        // 필수 필드가 비었습니다.
+        if ($account === '' || $password === '' || $role === '') {
+            echo json_response([
+                'success' => false,
+                'error' => ['code' => 'VALIDATION_ERROR',
+                            'message' => '필수 필드가 비었습니다.']
+            ], 401);
+            return;
+        }
         
         // account 일하는지 비겨
         if($result->num_rows === 0){
@@ -277,31 +287,49 @@ class UsersController
             'user_name' => $row['user_name']
         ];
 
-        echo json_response([
+        json_response([
             'success' => true,
-           ]);
+            'data' => [
+                'user' => [
+                    'user_id'   => (int)$row['user_id'],
+                    'account'   => $row['account'],
+                    'role'      => $row['role'],
+                    'user_name' => $row['user_name'],
+                ]
+            ]
+        ]);
     }
 
 
     // ==================
     // 'delete' => logout
     // ==================
-    public function logout() :void {
-        // 지금 session상태가 어떤지 check
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION = [];
-            if (ini_get('session.use_cookies')) {
-                $p = session_get_cookie_params();
-                setcookie(session_name(), '', time() - 42000,
-                        $p['path'], $p['domain'], $p['secure'], $p['httponly']);
-                        session_destroy();
-            }
-            json_response([
-                'success' => true
-            ], 204);
+    public function logout(): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
         }
+
+        // 세션 값 초기화
+        $_SESSION = [];
+
+        // 쿠키 제거
+        if (ini_get('session.use_cookies')) {
+            $p = session_get_cookie_params();
+            setcookie(
+                session_name(), '', time() - 42000,
+                $p['path'], $p['domain'],
+                $p['secure'], $p['httponly']
+            );
+        }
+
+        session_destroy();
+
+        // 꼭 200 으로! 204 절대 금지!
+        json_response([
+            'success' => true,
+            'message' => '로그아웃 완료'
+        ], 200);
     }
 }
-
-
 ?>
