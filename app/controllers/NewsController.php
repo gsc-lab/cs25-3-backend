@@ -35,7 +35,7 @@ class NewsController {
             // 파일이 전달되었는지 확인
             if (!isset($_FILES['image'])) {
                 json_response([
-                    'seccrec' => false,
+                    'success' => false,
                     'error' => [
                         'code' => 'NO_FILE',
                         'message' => 'image 파일이 전달되지 않았습니다.']
@@ -61,7 +61,7 @@ class NewsController {
 
             // 이미지 업로드 서비스 호출
             $imageService = new ImageService();
-            $uploadResult = $imageService->upload($file, 'hairstyle');
+            $uploadResult = $imageService->upload($file, 'news');
             
             // 업로드 후 반환된 파일의 key, url
             $fileKey     = $uploadResult['key'];
@@ -73,7 +73,7 @@ class NewsController {
             // sql문
             $stmt = $db->prepare("INSERT INTO News 
                                 (title,  content, file, file_key) 
-                                VALUES (?,?,?)");
+                                VALUES (?,?,?, ?)");
             $stmt->bind_param('ssss',$title, $content, $fileUrl, $fileKey);
             $stmt->execute();
 
@@ -109,40 +109,51 @@ class NewsController {
     // ==========================
     // 'GET' -> News 글 전체 보기
     // ==========================
-    public function index():void{
-
+    public function index():void
+    {
         try {
-            // DB접속
             $db = get_db();
-            // SELECT로 News테이블에 있는 모둔 글을 불어오기
-            $stmt = $db->prepare("SELECT * FROM News ORDER BY news_id DESC");
+
+            // 쿼리스트링 limit 파라미터 처리
+            $limit = null;
+            if (isset($_GET['limit'])) {
+                $limit = filter_var($_GET['limit'], FILTER_VALIDATE_INT);
+            }
+
+            // 기본 쿼리
+            $sql = "SELECT * FROM News ORDER BY news_id DESC";
+            if ($limit !== null) {
+                $sql .= " LIMIT ?";
+            }
+
+            $stmt = $db->prepare($sql);
+            if ($limit !== null) {
+                $stmt->bind_param('i', $limit);
+            }
             $stmt->execute();
             $result = $stmt->get_result();
-            
-            // News전체 글을 넣는 리스트 만들기
+
             $news = [];
-            
-            // 행을 하나 씩 $rows에 넣는다 
-            while($row = $result->fetch_assoc()){
-                array_push($news, $row);
+            while ($row = $result->fetch_assoc()) {
+                $news[] = $row;
             }
-            
-            // 프론트엔드에 정보 보내기
+
             json_response([
                 "success" => true,
-                'data' => ['news' => $news]
+                "data"    => ['news' => $news],
             ]);
 
-        } catch (Throwable $e){
+        } catch (Throwable $e) {
             error_log('[news_index]'. $e->getMessage());
             json_response([
                 "success" => false,
-                "error" => ['code' => 'INTERNAL_SERVER_ERROR', 
-                            'message' => '서버 오류가 발생했습니다.'
-            ]],500);
+                "error"   => [
+                    'code'    => 'INTERNAL_SERVER_ERROR',
+                    'message' => '서버 오류가 발생했습니다.'
+                ]
+            ], 500);
             return;
         }
-        
     }
 
 
@@ -271,19 +282,6 @@ class NewsController {
                 $types   .= 's';
             }
         }
-
-        // 수정할 데이터가 하나도 없으면 오류
-        if (empty($field)) {
-            json_response([
-                'success' => false,
-                'error'   => [
-                        'code'    => 'NO_FIELDS_TO_UPDATE',
-                        'message' => '수정할 필드가 없습니다.',
-                    ],
-                ], 400);
-                return;
-            }
-        
         
         try {
 
@@ -291,27 +289,16 @@ class NewsController {
             $db = get_db();
 
             // update SQL문
-            $stmt = $db->prepare("UPDATE News SET"
+            $stmt = $db->prepare("UPDATE News SET "
                                 . implode(',', $fields). 
                                   " WHERE news_id=?");
             // 마지막에 news_id 추가
             $types .= 'i';
             $params[] = $news_id;
             // 가변 인자 바인딩
-            $stmt->bind_param($types, $params);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
-            
-            // 변경된 행이 없을 때
-            if ($db->affected_rows === 0) {
-                json_response([
-                    'success' => false,
-                    'error'   => [
-                        'code'    => 'NO_CHANGES_APPLIED',
-                        'message' => '수정된 내용이 없습니다.'
-                    ]
-                ], 409);
-                return;
-            }
+
             $stmt->close();
 
             // update 정보 가져오기
@@ -332,7 +319,7 @@ class NewsController {
             error_log('[news_update]'.$e->getMessage());
             json_response([
                 "success" => false,
-                "error" => ["code" => "VALIDATION_ERROR",
+                "error" => ["code" => "INTERNAL_SERVER_ERROR",
                             "message" => "서버 오류가 발생했습니다." ]
             ], 500);
             return;
@@ -342,7 +329,7 @@ class NewsController {
 
 
     // ==========================
-    // PUT /news/:id/image — 이미지 변경
+    // PUT /news/image/:id — 이미지 변경
     // ==========================
     // --- updateImage 메서드는 뉴스 글의 '이미지만' 수정하는 기능을 담당합니다.
     // --- 클라이언트는 PUT /news/{id}/image 와 같은 요청을 보내며
@@ -421,8 +408,8 @@ class NewsController {
 
             // 기존 이미지가 있다면 삭제 시도
             try {
-                if (!empty($current['image_key'])) {
-                    $imageService->delete($current['image_key']);
+                if (!empty($current['file_key'])) {
+                    $imageService->delete($current['file_key']);
                 }
             } catch (Throwable $e){
                 // 이미지 삭제 실패해도 글 수정은 계속
