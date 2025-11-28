@@ -50,6 +50,15 @@ function registerNews(AltoRouter $router) :void {
                 'action'     => 'delete',
                 'middleware' => ['login', 'manager']
             ]);   
+
+    // ================================
+    // news 이미지 업데이트 (login필수)(manager)
+    // ================================ 
+    $router->map("POST", '/news/image/[a:news_id]',[
+                'controller' => 'NewsController',
+                'action'     => 'updateImage',
+                'middleware' => ['login', 'manager']
+            ]);  
 }
 
 ?>
