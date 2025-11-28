@@ -18,7 +18,38 @@ class HairstyleController
         try {
             $db = get_db();
 
-            $stmt = $db->prepare("SELECT * FROM HairStyle ORDER BY hair_id DESC");
+            // 🔹 쿼리스트링 limit 파라미터 처리 (옵션)
+            $limit = null;
+            if (isset($_GET['limit'])) {
+                $limit = filter_var($_GET['limit'], FILTER_VALIDATE_INT, [
+                    'options' => [
+                        'min_range' => 1,
+                        'max_range' => 50, // 한 번에 최대 50개까지만
+                    ],
+                ]);
+
+                if ($limit === false) {
+                    json_response([
+                        'success' => false,
+                        'error'   => [
+                            'code'    => 'INVALID_LIMIT',
+                            'message' => 'limit 파라미터가 올바르지 않습니다.',
+                        ],
+                    ], 400);
+                    return;
+                }
+            }
+
+            // 기본 쿼리
+            $sql = "SELECT * FROM HairStyle ORDER BY hair_id DESC";
+            if ($limit !== null) {
+                $sql .= " LIMIT ?";
+            }
+
+            $stmt = $db->prepare($sql);
+            if ($limit !== null) {
+                $stmt->bind_param('i', $limit);
+            }
             $stmt->execute();
             $result = $stmt->get_result();
 
