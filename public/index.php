@@ -1,6 +1,21 @@
 <?php
 declare(strict_types=1);
 
+// 쿠키 만료시간 1시간
+$sessionLifetime = 3600;
+
+// 세션 만료 정리 시간 설정
+ini_set('session.gc_maxlifetime', (string)$sessionLifetime);
+
+// 세션 쿠키 설정
+session_set_cookie_params([
+    'lifetime' => $sessionLifetime,
+    'path'     => '/',
+    'secure'   => false,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
 session_start();
 
 // Composer 오토로드 불러오기
@@ -11,13 +26,13 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
 // 공통 HTTP 응답 함수 등
-require_once __DIR__ . '/../app/http.php';
+require_once __DIR__ . '/../App/http.php';
 
 // 라우터 설정 (registerAllRoutes 함수 포함)
 require_once __DIR__ . '/../routes/router.php';
 
 // 미들웨어 파일 로드 (run_middlewares, require_login 등)
-require_once __DIR__ . '/../app/middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../App/middleware/AuthMiddleware.php';
 
 // 프리플라이트 요청(OPTIONS)은 여기서 바로 종료 → 실제 라우터까지 보내지 않음
 // CORS 설정 시 브라우저가 먼저 OPTIONS로 물어볼 때 사용
